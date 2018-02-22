@@ -1,1 +1,0 @@
-(u'www.hinglishpedia.com', u'/rearrange', u'')
