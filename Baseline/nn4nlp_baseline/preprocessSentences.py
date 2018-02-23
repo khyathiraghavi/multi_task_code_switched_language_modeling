@@ -45,7 +45,11 @@ def tokenize(toTokenize, lanIDsToTokenize, soundexToTokenize):
 		fWord.addFactor(LANGAUGE_FACTOR, langToken)
 		fWord.addFactor(SOUNDEX_FACTOR, soundToken)
 		res.append(fWord)
-	res.append(FactoredWord(EOS_TOKEN))
+
+	eos = FactoredWord(EOS_TOKEN)
+	eos.addFactor(LANGAUGE_FACTOR, UNK_TOKEN)
+	eos.addFactor(SOUNDEX_FACTOR, UNK_TOKEN)
+	res.append(eos)
 	return res
 
 def unkify(toUnk, mc, langMc, soundexMc):

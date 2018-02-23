@@ -1,5 +1,3 @@
-UNKOWN_FACTOR = "UNK_FACTOR"
-
 class FactoredWord:
 	def __init__(self, word):
 		self.__word = word
@@ -15,10 +13,7 @@ class FactoredWord:
 		return self.__word
 
 	def getFactor(self, field):
-		try:
-			return self.__factors[field]
-		except:
-			return str(field)+"_"+UNKOWN_FACTOR
+		return self.__factors[field]
 	def __str__(self):
 		return "/".join([self.__word] + self.__factors.values())
 	def __eq__(self, b):
