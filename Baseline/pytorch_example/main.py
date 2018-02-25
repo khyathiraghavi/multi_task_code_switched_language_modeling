@@ -152,7 +152,9 @@ def train():
         hidden = repackage_hidden(hidden)
         model.zero_grad()																				# Before doing our backwards pass make sure that the gradients are all set to zero
         output, hidden = model(data, hidden)															# Based on the current batch, do the forward pass, using the given hidden params
-        loss = criterion(output.view(-1, ntokens), targets)												# Calculate the loss with respect to the last element of the output (we discard all the other outputs here) and the targets
+        shaped = output.view(-1, ntokens)
+        print shaped.size(), targets.size()
+        loss = criterion(shaped, targets)												# Calculate the loss with respect to the last element of the output (we discard all the other outputs here) and the targets
         loss.backward()																					# Actually do the backwards pass, this populates the gradients 
 
         # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
