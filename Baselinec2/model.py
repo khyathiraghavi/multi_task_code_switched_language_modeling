@@ -32,7 +32,7 @@ class RNNModel(nn.Module):
             except KeyError:																	#If it fails then the user has passed an invalid RNN Cell type
                 raise ValueError( """An invalid option for `--model` was supplied,				
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")		#So we throw an error
-            self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)	#If we havent thrown an error, then we create an RNN cell and call it our RNN with the appropriate args
+            self.rnn = nn.RNN(nemb, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)	#If we havent thrown an error, then we create an RNN cell and call it our RNN with the appropriate args
         self.decoder = nn.Linear(nhid, ntoken)													#Then we define a linear layer which is our decoder. Presumably you could do a softmax over this linear layer here, im not sure why they arent doing that already 
 
         if tie_weights:																			#If you are going to tie the weights...
