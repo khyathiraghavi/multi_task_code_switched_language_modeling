@@ -25,7 +25,7 @@ parser.add_argument('--lr', type=float, default=0.01,
                     help='initial learning rate')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
-parser.add_argument('--epochs', type=int, default=40,
+parser.add_argument('--epochs', type=int, default=1,
                     help='upper epoch limit')
 parser.add_argument('--batch_size', type=int, default=100, metavar='N',
                     help='batch size')
@@ -153,7 +153,6 @@ def train():
         model.zero_grad()																				# Before doing our backwards pass make sure that the gradients are all set to zero
         output, hidden = model(data, hidden)															# Based on the current batch, do the forward pass, using the given hidden params
         shaped = output.view(-1, ntokens)
-        print shaped.size(), targets.size()
         loss = criterion(shaped, targets)												# Calculate the loss with respect to the last element of the output (we discard all the other outputs here) and the targets
         loss.backward()																					# Actually do the backwards pass, this populates the gradients 
 

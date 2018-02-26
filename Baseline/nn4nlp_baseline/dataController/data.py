@@ -20,6 +20,12 @@ class FactorDictionary(object):
     def __len__(self):	
         return len(self.idx2word)							#Return the number of indexes that we have have, which is the vocabulary size
 
+    def outputKey(self, path):
+        f = open(path, "w")
+        for word, idx in self.word2idx.items():
+            f.write(str(word) + "->" + str(idx) + "\n")
+        f.close()
+
 
 #This is a simple class that stores all of our training, test, and validation data
 class Corpus(object):
@@ -48,6 +54,9 @@ class Corpus(object):
                     for factor in word.split("/"):
                         label, value = factor.split(":")
                         self.dictionaries[label].add_word(value)
+
+        for label, dic in self.dictionaries.items():
+            dic.outputKey("output/"+str(label) + ".key")
 
     def convertToData(self, path, factorsInfo):
         with open(path, 'r') as f:                                      #Open the file 

@@ -10,7 +10,7 @@ INPUT_FILENAME = "data/dedup_sentences.txt"
 SOUNDEX_INPUT_FILE = "data/dedup_soundex.txt"
 LANG_INPUT_FILE = "data/dedup_lang_ids.txt"
 
-OUTPUT_FILENAME = "output/output.txt"
+OUTPUT_FILENAME = "output/vanilla_output.txt"
 
 ############################################### DATA CONSTANTS ###############################################
 
@@ -38,7 +38,7 @@ WORD_FACTOR = "WORD_FACTOR"
 LANGAUGE_FACTOR = "LANG_FACTOR"
 SOUNDEX_FACTOR = "SOUNDEX_FACTOR"
 
-FACTORS_LIST = [WORD_FACTOR, LANGAUGE_FACTOR, SOUNDEX_FACTOR]
+FACTORS_LIST = [WORD_FACTOR]#, LANGAUGE_FACTOR, SOUNDEX_FACTOR]
 
 ############################################### CODE BELOW ###############################################
 
@@ -63,14 +63,14 @@ def factorize(toTokenize, lanIDsToTokenize, soundexToTokenize):
 	for token, langToken, soundToken in zip(toks, langToks, soundexToks):
 		fWord = FactoredWord(FACTORS_LIST)
 		fWord.addFactor(WORD_FACTOR,     token)
-		fWord.addFactor(LANGAUGE_FACTOR, langToken)
-		fWord.addFactor(SOUNDEX_FACTOR,  soundToken)
+		#fWord.addFactor(LANGAUGE_FACTOR, langToken)
+		#fWord.addFactor(SOUNDEX_FACTOR,  soundToken)
 		res.append(fWord)
 
 	eos = FactoredWord(FACTORS_LIST)
 	eos.addFactor(WORD_FACTOR,     EOS_TOKEN)
-	eos.addFactor(LANGAUGE_FACTOR, LANG_OTHER_TOKEN)
-	eos.addFactor(SOUNDEX_FACTOR,  SOUNDEX_EOS_TOKEN)
+	#eos.addFactor(LANGAUGE_FACTOR, LANG_OTHER_TOKEN)
+	#eos.addFactor(SOUNDEX_FACTOR,  SOUNDEX_EOS_TOKEN)
 	res.append(eos)
 
 	return res
@@ -80,10 +80,10 @@ def unkify(toUnk, mc, langMc, soundexMc):
 	for token in toUnk:
 		if (mc.getRank(token.getFactor(WORD_FACTOR)) > VOCAB_SIZE):
 			token.addFactor(WORD_FACTOR, UNK_TOKEN)
-		if (langMc.getRank(token.getFactor(LANGAUGE_FACTOR)) > LANG_ID_VOCAB_SIZE):
+		'''if (langMc.getRank(token.getFactor(LANGAUGE_FACTOR)) > LANG_ID_VOCAB_SIZE):
 			token.addFactor(LANGAUGE_FACTOR, LANG_OTHER_TOKEN)
 		if (soundexMc.getRank(token.getFactor(SOUNDEX_FACTOR)) > SOUNDEX_VOCAB_SIZE):
-			token.addFactor(SOUNDEX_FACTOR, SOUNDEX_UNK_TOKEN)
+			token.addFactor(SOUNDEX_FACTOR, SOUNDEX_UNK_TOKEN)'''
 		res.append(token)
 	return res
 
@@ -118,8 +118,8 @@ mcSoundex = Counts()
 for line in cleanLines:
 	for token in line:
 		mc.incrementWord(token.getFactor(WORD_FACTOR))
-		mcLang.incrementWord(token.getFactor(LANGAUGE_FACTOR))
-		mcSoundex.incrementWord(token.getFactor(SOUNDEX_FACTOR))
+		#mcLang.incrementWord(token.getFactor(LANGAUGE_FACTOR))
+		#mcSoundex.incrementWord(token.getFactor(SOUNDEX_FACTOR))
 mc.fixRanks()
 mcLang.fixRanks()
 mcSoundex.fixRanks()

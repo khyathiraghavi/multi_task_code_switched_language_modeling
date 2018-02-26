@@ -62,7 +62,6 @@ class RNNModel(nn.Module):
     #Hidden - This represents the hidden value in our RNN cell after it has completed its iterations, it is taken as an argument in all RNN cells so this is just keeping up the design pattern, but this is because you may want to initialize it in a special way or something
     def forward(self, input, hidden):
         emb = self.drop(self.encoder(input))													#Calculate the embedding value by extracting the embedding for the words in input and then performing dropout
-        print emb.size()
         output, hidden = self.rnn(emb, hidden)													#Calculate the output of the RNN by passing in the embedding value from the previous layer and the hidden state
         output = self.drop(output) 																#Perform dropout on the output, this is done seperately so we can keep track of the hidden state
         
