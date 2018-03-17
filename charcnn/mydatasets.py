@@ -33,11 +33,15 @@ class TarDataset(data.Dataset):
         return os.path.join(path, '')
 
 
+    #@classmethod
+    #def temporary():
+    #    pass
+
 class MR(TarDataset):
 
-    url = 'https://www.cs.cornell.edu/people/pabo/movie-review-data/rt-polaritydata.tar.gz'
-    filename = 'rt-polaritydata.tar'
-    dirname = 'rt-polaritydata'
+    #url = 'https://www.cs.cornell.edu/people/pabo/movie-review-data/rt-polaritydata.tar.gz'
+    #filename = 'rt-polaritydata.tar'
+    #dirname = 'rt-polaritydata'
 
     @staticmethod
     def sort_key(ex):
@@ -74,20 +78,27 @@ class MR(TarDataset):
             string = re.sub(r"\s{2,}", " ", string)
             return string.strip()
 
+	# this defines a pipeline for transforming sequence data. In this case this is done for preprocessing.
+	# The Pipeline takes in a function(s?) as arguments which need to be applied.
         text_field.preprocessing = data.Pipeline(clean_str)
-        fields = [('text', text_field), ('label', label_field)]
+        
+	# for the task of LM, we would have only fields = [('text', text_field)]
+	fields = [('text', text_field), ('label', label_field)]
 
         if examples is None:
             path = self.dirname if path is None else path
             examples = []
             #with open(os.path.join(path, 'rt-polarity.neg'), errors='ignore') as f:
-            with open('rt-polaritydata/temp.neg') as f:
-                examples += [
-                    data.Example.fromlist([line, 'negative'], fields) for line in f]
+            with open('data/temp.neg') as f:
+                # for LM task there is no label for each line and hence the examples become the following
+		# examples = [data.Example.fromlist([line], fields) for line in f]
+		# examples is a list of objects of torchtext.data.example.Example 
+		# each line corresponds to an element in the list of examples
+		examples += [data.Example.fromlist([line, 'negative'], fields) for line in f]
             #with open(os.path.join(path, 'rt-polarity.pos'), errors='ignore') as f:
-            with open('rt-polaritydata/temp.pos') as f:
-                examples += [
-                    data.Example.fromlist([line, 'positive'], fields) for line in f]
+            with open('data/temp.pos') as f:
+		# the same is done for positive examples
+                examples += [data.Example.fromlist([line, 'positive'], fields) for line in f]
         super(MR, self).__init__(examples, fields, **kwargs)
 
     @classmethod
@@ -106,10 +117,16 @@ class MR(TarDataset):
             Remaining keyword arguments: Passed to the splits method of
                 Dataset.
         """
-        path = cls.download_or_unzip(root)
-        examples = cls(text_field, label_field, path=path, **kwargs).examples
-        if shuffle: random.shuffle(examples)
-        dev_index = -1 * int(dev_ratio*len(examples))
-
+        #path = cls.download_or_unzip(root)
+        #print path
+	#print "here"
+	path = "./data/"
+	examples = cls(text_field, label_field, path=path, **kwargs).examples
+	if shuffle: random.shuffle(examples)
+        
+	# after random shuffling negative index is used to get the elements from behind
+	dev_index = -1 * int(dev_ratio*len(examples))
+	
+	# returning a pair of MR objects with train and dev objects with the text_field, label_field and examples list
         return (cls(text_field, label_field, examples=examples[:dev_index]),
                 cls(text_field, label_field, examples=examples[dev_index:]))
