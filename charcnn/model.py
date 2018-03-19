@@ -10,12 +10,13 @@ class CNN_Text(nn.Module):
         super(CNN_Text, self).__init__()
         self.args = args
         
-        V = args.embed_num
-        D = args.embed_dim
-        C = args.class_num
-        Ci = 1
-        Co = args.kernel_num
-        Ks = args.kernel_sizes
+        V = args.embed_num # 136
+        D = args.embed_dim # 128
+        C = args.class_num # 2
+        Ci = 1 # 1
+        Co = args.kernel_num # number of each kind of kernel , 100 here
+        Ks = args.kernel_sizes # [3, 4, 5]
+	#print V, D, C, Ci, Co, Ks # 136 128 2 1 100 [3, 4, 5]
 
         self.embed = nn.Embedding(V, D)
         # self.convs1 = [nn.Conv2d(Ci, Co, (K, D)) for K in Ks]
@@ -26,7 +27,7 @@ class CNN_Text(nn.Module):
         self.conv15 = nn.Conv2d(Ci, Co, (5, D))
         '''
         self.dropout = nn.Dropout(args.dropout)
-        self.fc1 = nn.Linear(len(Ks)*Co, C)
+        self.fc1 = nn.Linear(len(Ks)*Co, C) # fully connected layer
 
     def conv_and_pool(self, x, conv):
         x = F.relu(conv(x)).squeeze(3)  # (N, Co, W)
