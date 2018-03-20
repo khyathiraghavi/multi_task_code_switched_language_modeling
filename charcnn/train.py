@@ -89,6 +89,7 @@ def eval(data_iter, model, args):
 
 
 def predict(text, model, text_field, label_feild, cuda_flag):
+    text = "this is my sample text for predict"
     assert isinstance(text, str)
     model.eval()
     # text = text_field.tokenize(text)
