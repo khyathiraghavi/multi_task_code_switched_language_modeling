@@ -42,6 +42,7 @@ class MR(TarDataset):
     #url = 'https://www.cs.cornell.edu/people/pabo/movie-review-data/rt-polaritydata.tar.gz'
     #filename = 'rt-polaritydata.tar'
     #dirname = 'rt-polaritydata'
+    alphabet = 'abcdefghijklmnopqrstuvwxyz01234567890 \n.,!?'
 
     @staticmethod
     def sort_key(ex):
@@ -89,16 +90,42 @@ class MR(TarDataset):
             path = self.dirname if path is None else path
             examples = []
             #with open(os.path.join(path, 'rt-polarity.neg'), errors='ignore') as f:
-            with open('data/temp.neg') as f:
+            with open('./data/temp.neg') as f:
                 # for LM task there is no label for each line and hence the examples become the following
 		# examples = [data.Example.fromlist([line], fields) for line in f]
 		# examples is a list of objects of torchtext.data.example.Example 
 		# each line corresponds to an element in the list of examples
-		examples += [data.Example.fromlist([line, 'negative'], fields) for line in f]
+		#lines = f.readlines()
+		'''
+		for line in lines:
+			try:
+				line = line.strip().split()
+				label = line[-1]
+				txt = ' '.join(line[:-1])
+				examples.append(data.Example.fromlist([txt, 'negative'], fields))
+				#examples += [data.Example.fromlist([line, 'negative'], fields) for line in f] #original
+			except:
+				continue
+		'''
+		examples += [data.Example.fromlist([' '.join(line.strip().split()[:-1]), line.strip().split()[-1]], fields) for line in f] 
+		#examples += [data.Example.fromlist([line, 'negative'], fields) for line in f] #original
             #with open(os.path.join(path, 'rt-polarity.pos'), errors='ignore') as f:
-            with open('data/temp.pos') as f:
+            with open('./data/temp.pos') as f:
 		# the same is done for positive examples
-                examples += [data.Example.fromlist([line, 'positive'], fields) for line in f]
+                '''
+		lines = f.readlines()
+                for line in lines:
+			try:
+                        	line = line.strip().split()
+                        	label = line[-1]
+                        	txt = ' '.join(line[:-1])
+                        	examples.append(data.Example.fromlist([txt, 'positive'], fields))
+				#examples += [data.Example.fromlist([line, 'positive'], fields) for line in f]
+			except:
+				continue
+		'''
+		examples += [data.Example.fromlist([' '.join(line.strip().split()[:-1]), line.strip().split()[-1]], fields) for line in f] 
+		#examples += [data.Example.fromlist([line, 'positive'], fields) for line in f] #original
         super(MR, self).__init__(examples, fields, **kwargs)
 
     @classmethod
@@ -128,5 +155,6 @@ class MR(TarDataset):
 	dev_index = -1 * int(dev_ratio*len(examples))
 	
 	# returning a pair of MR objects with train and dev objects with the text_field, label_field and examples list
-        return (cls(text_field, label_field, examples=examples[:dev_index]),
+        #print cls(text_field, label_field, examples=examples[:dev_index])
+	return (cls(text_field, label_field, examples=examples[:dev_index]),
                 cls(text_field, label_field, examples=examples[dev_index:]))

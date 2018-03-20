@@ -9,6 +9,7 @@ def train(train_iter, dev_iter, model, args):
     if args.cuda:
         model.cuda()
 
+    print train_iter
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     steps = 0
@@ -16,7 +17,9 @@ def train(train_iter, dev_iter, model, args):
     last_step = 0
     model.train()
     for epoch in range(1, args.epochs+1):
-        for batch in train_iter:
+        print "in epoch " + str(epoch)
+	for batch in train_iter:
+	    print batch
             feature, target = batch.text, batch.label
             feature.data.t_(), target.data.sub_(1)  # batch first, index align
             if args.cuda:
@@ -32,8 +35,12 @@ def train(train_iter, dev_iter, model, args):
             optimizer.step()
 
             steps += 1
+	    print steps
+	    print args.log_interval
             if steps % args.log_interval == 0:
-                corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
+                #print "here"
+		#exit(1)
+		corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
                 accuracy = 100.0 * corrects/batch.batch_size
                 sys.stdout.write(
                     '\rBatch[{}] - loss: {:.6f}  acc: {:.4f}%({}/{})'.format(steps, 
