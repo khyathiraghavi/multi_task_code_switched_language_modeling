@@ -30,22 +30,28 @@ def repackage_hidden(h):
         return tuple(repackage_hidden(v) for v in h)
 
 
-def batchify(data, bsz, args):
-    # Work out how cleanly we can divide the dataset into bsz parts.
-    nbatch = data.size(0) // bsz
-    # Trim off any extra elements that wouldn't cleanly fit (remainders).
-    data = data.narrow(0, 0, nbatch * bsz)
-    # Evenly divide the data across the bsz batches.
-    data = data.view(bsz, -1).t().contiguous()
-    if args.cuda:
-        data = data.cuda()
-    return data
 
-def get_batch(source, i, seq_len=None, evaluation=False):
-    seq_len = min(seq_len if seq_len else BPTT, len(source) - 1 - i)
-    data = Variable(source[i:i+seq_len], volatile=evaluation)
-    target = Variable(source[i+1:i+1+seq_len].view(-1))
-    return data, target
+class Batching(object):
+    def __init__(self):
+        self.batching = True
+
+    def batchify(self, data, batch_size, args):
+        '''
+        identify the number of batches possible with the batch size and then remove the extra data points.
+        Distribute the data points equally across the batches
+        '''
+        num_batches = data.size(0) // batch_size
+        data = data.narrow(0, 0, num_batches * batch_size)
+        data = data.view(batch_size, -1).t().contiguous()
+        if args.cuda:
+            data = data.cuda()
+        return data
+
+    def get_batch(self, source, i, seq_len=None, evaluation=False):
+        seq_len = min(seq_len if seq_len else BPTT, len(source) - 1 - i)
+        data = Variable(source[i:i+seq_len], volatile=evaluation)
+        target = Variable(source[i+1:i+1+seq_len].view(-1))
+        return data, target
 
 
 ###############################################################################
@@ -56,9 +62,10 @@ corpus = data.Corpus(DATA_PATH)
 
 eval_batch_size = 10
 test_batch_size = 1
-train_data = batchify(corpus.train, BATCH_SIZE, args)
-val_data = batchify(corpus.valid, eval_batch_size, args)
-test_data = batchify(corpus.test, test_batch_size, args)
+batching = Batching()
+train_data = batching.batchify(corpus.train, BATCH_SIZE, args)
+val_data = batching.batchify(corpus.valid, eval_batch_size, args)
+test_data = batching.batchify(corpus.test, test_batch_size, args)
 
 print ("done batchifying")
 
@@ -87,7 +94,7 @@ def evaluate(data_source, batch_size=10):
     ntokens = len(corpus.dictionary)
     hidden = model.init_hidden(batch_size)
     for i in range(0, data_source.size(0) - 1, BPTT):
-        data, targets = get_batch(data_source, i, evaluation=True)
+        data, targets = batching.get_batch(data_source, i, evaluation=True)
         output, hidden = model(data, hidden)
         output_flat = output.view(-1, ntokens)
         total_loss += len(data) * criterion(output_flat, targets).data
@@ -112,7 +119,7 @@ def train():
         lr2 = optimizer.param_groups[0]['lr']
         optimizer.param_groups[0]['lr'] = lr2 * seq_len / BPTT
         model.train()
-        data, targets = get_batch(train_data, i, seq_len=seq_len)
+        data, targets = batching.get_batch(train_data, i, seq_len=seq_len)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
