@@ -3,13 +3,13 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 class locked_dropout(nn.Module):
-    def __init__(self):
-        super().__init__()
+	def __init__(self):
+		super().__init__()
 
-    def forward(self, x, dropout=0.5):
-        if not self.training or not dropout:
-            return x
-        m = x.data.new(x.size(0), 1, x.size(2)).bernoulli_(1 - dropout)
-        mask = Variable(m, requires_grad=False) / (1 - dropout)
-        mask = mask.expand_as(x)
-        return mask * x
+	def forward(self, x, dropout=0.5):
+		if not self.training or not dropout:
+			return x
+		m = x.data.new(x.size(0), 1, x.size(2)).bernoulli_(1 - dropout)
+		mask = Variable(m, requires_grad=False) / (1 - dropout)
+		mask = mask.expand_as(x)
+		return mask * x
