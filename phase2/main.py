@@ -73,8 +73,8 @@ print ("done batchifying")
 # Build the model
 ###############################################################################
 
-ntokens = len(corpus.dictionary)
-model = model.RNNModel(MODEL_TYPE, ntokens, WORD_EMBEDDING_SIZE, NUMBER_HIDDEN, NUMBER_LAYERS, DROPOUT, DROPOUT_HID, DROPOUT_INP, DROPOUT_EMB, WEIGHT_DROP, TIED)
+num_tokens = len(corpus.dictionary)
+model = model.RNNModel(num_tokens)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())

@@ -48,3 +48,7 @@ USE_CUDA = False
 DEUBG_LOG_INTERVAL = 1
 
 TIED = True
+
+WEIGHT_INIT = 0.1
+
+

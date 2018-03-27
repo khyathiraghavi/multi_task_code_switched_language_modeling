@@ -1,3 +1,4 @@
+from constants import *
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -7,35 +8,42 @@ from optimization.locked_dropout import locked_dropout
 from optimization.weight_drop import weight_drop
 
 class RNNModel(nn.Module):
-    """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False):
+    def __init__(self, num_token):
         super(RNNModel, self).__init__()
         self.lockdrop = locked_dropout()
-        self.idrop = nn.Dropout(dropouti)
-        self.hdrop = nn.Dropout(dropouth)
-        self.drop = nn.Dropout(dropout)
-        self.encoder = nn.Embedding(ntoken, ninp)
-        self.rnns = [torch.nn.LSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else ninp, 1, dropout=dropouth) for l in range(nlayers)]
+        self.encoder = nn.Embedding(num_token, WORD_EMBEDDING_SIZE)
+        self.rnns = [torch.nn.LSTM(WORD_EMBEDDING_SIZE if l == 0 else NUMBER_HIDDEN, NUMBER_HIDDEN if l != NUMBER_LAYERS - 1 else WORD_EMBEDDING_SIZE, 1, dropout=DROPOUT_HID) for l in range(NUMBER_LAYERS)]
         print(self.rnns)
-        if wdrop:
-            self.rnns = [weight_drop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
+        if WEIGHT_DROP:
+            self.rnns = [weight_drop(rnn, ['weight_hh_l0'], dropout=WEIGHT_DROP) for rnn in self.rnns]
         self.rnns = torch.nn.ModuleList(self.rnns)
-        self.decoder = nn.Linear(nhid, ntoken)
+        self.decoder = nn.Linear(NUMBER_HIDDEN, num_token)
 
-        # Optionally tie weights as in:
-        # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
-        # https://arxiv.org/abs/1608.05859
-        # and
-        # "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling" (Inan et al. 2016)
-        # https://arxiv.org/abs/1611.01462
-        if tie_weights:
+        if TIED:
             #if nhid != ninp:
             #    raise ValueError('When using the tied flag, nhid must be equal to emsize')
             self.decoder.weight = self.encoder.weight
 
-        self.init_weights()
+        #self.init_weights()
+        
+        self.encoder.weight.data.uniform_(-WEIGHT_INIT, WEIGHT_INIT)
+        self.decoder.bias.data.fill_(0)
+        self.decoder.weight.data.uniform_(-WEIGHT_INIT, WEIGHT_INIT)
 
+        
+        '''
+        self.rnn_type = MODEL_TYPE
+        self.ninp = WORD_EMBEDDING_SIZE
+        self.nhid = NUMBER_HIDDEN
+        self.nlayers = NUMBER_LAYERS
+        self.dropout = DROPOUT
+        self.dropouti = DROPOUT_INP
+        self.dropouth = DROPOUT_HID
+        self.dropoute = DROPOUT_EMB
+        '''
+
+        '''
         self.rnn_type = rnn_type
         self.ninp = ninp
         self.nhid = nhid
@@ -44,18 +52,21 @@ class RNNModel(nn.Module):
         self.dropouti = dropouti
         self.dropouth = dropouth
         self.dropoute = dropoute
+        '''
 
+    '''
     def init_weights(self):
         initrange = 0.1
         self.encoder.weight.data.uniform_(-initrange, initrange)
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
+    '''
 
     def forward(self, input, hidden, return_h=False):
-        emb = embed_regularize(self.encoder, input, dropout=self.dropoute if self.training else 0)
+        emb = embed_regularize(self.encoder, input, dropout=DROPOUT_EMB if self.training else 0)
         #emb = self.idrop(emb)
 
-        emb = self.lockdrop(emb, self.dropouti)
+        emb = self.lockdrop(emb, DROPOUT_INP)
 
         raw_output = emb
         new_hidden = []
@@ -67,13 +78,13 @@ class RNNModel(nn.Module):
             raw_output, new_h = rnn(raw_output, hidden[l])
             new_hidden.append(new_h)
             raw_outputs.append(raw_output)
-            if l != self.nlayers - 1:
+            if l != NUMBER_LAYERS - 1:
                 #self.hdrop(raw_output)
-                raw_output = self.lockdrop(raw_output, self.dropouth)
+                raw_output = self.lockdrop(raw_output, DROPOUT_HID)
                 outputs.append(raw_output)
         hidden = new_hidden
 
-        output = self.lockdrop(raw_output, self.dropout)
+        output = self.lockdrop(raw_output, DROPOUT)
         outputs.append(output)
 
         decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
@@ -84,6 +95,6 @@ class RNNModel(nn.Module):
 
     def init_hidden(self, bsz):
         weight = next(self.parameters()).data
-        return [(Variable(weight.new(1, bsz, self.nhid if l != self.nlayers - 1 else self.ninp).zero_()),
-                Variable(weight.new(1, bsz, self.nhid if l != self.nlayers - 1 else self.ninp).zero_()))
-                for l in range(self.nlayers)]
+        return [(Variable(weight.new(1, bsz, NUMBER_HIDDEN if l != NUMBER_LAYERS - 1 else WORD_EMBEDDING_SIZE).zero_()),
+                Variable(weight.new(1, bsz, NUMBER_HIDDEN if l != NUMBER_LAYERS - 1 else WORD_EMBEDDING_SIZE).zero_()))
+                for l in range(NUMBER_LAYERS)]
