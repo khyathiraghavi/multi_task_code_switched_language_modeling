@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.autograd as autograd
 from torch.autograd import Variable
 
-from optimization.embed_regularize import embed_regularize
-from optimization.locked_dropout import locked_dropout
-from optimization.weight_drop import weight_drop
+from optimizers.embed_regularize import embed_regularize
+from optimizers.locked_dropout import locked_dropout
+from optimizers.weight_drop import weight_drop
 
 class RNNModel(nn.Module):
 
