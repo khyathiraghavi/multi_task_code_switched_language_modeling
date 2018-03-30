@@ -14,8 +14,10 @@ NONMONO = 5
 
 
 MODEL_TYPE = "LSTM"
-DATA_PATH = "/projects/tir1/users/kchandu/language_model_data/sample_data/penn/"
-MODEL_SAVE_PATH = "/projects/tir1/users/kchandu/language_models/model.pt"
+#DATA_PATH = "/projects/tir1/users/kchandu/language_model_data/sample_data/penn/"
+DATA_PATH = "./data/penn"
+#MODEL_SAVE_PATH = "/projects/tir1/users/kchandu/language_models/model.pt"
+MODEL_SAVE_PATH = "./Penn-Fine.pt"
 
 WORD_FACTOR = "WORD_FACTOR"
 #LANGUAGE_FACTOR = "LANG_FACTOR"
