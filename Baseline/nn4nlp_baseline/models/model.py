@@ -42,6 +42,8 @@ class FactoredRNN(nn.Module):
 		initrange = 0.1																			#Define a range that you want to initialize the weight matrix
 		for encoder in self.encoders:
 			encoder.weight.data.uniform_(-initrange, initrange)									#Initialize the weights for the encoder to a matrix filled with numbers drawn from a uniformly random distribution along the predefined range, note that embedding layers do not have bias terms so that is why we dont handle initialization of bias terms for the encoder
+								encoder.weight.data.to_numpy()			
+
 																								#Note that the "_" postscript of the uniform function means that this operation is done in place and the value is not returned
 		self.decoder.bias.data.fill_(0)															#Set the bias on the decoder to all zeros
 		self.decoder.weight.data.uniform_(-initrange, initrange)								#initialize the weights for the decoder to a matrix filled with numbers drawn from a uniformly random distribution along the predefined range
