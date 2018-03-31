@@ -79,7 +79,7 @@ def evaluate(data):
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
 
 				#Pass the correlation values through a softmax so we can think of them as probabilities
-				hiddenProbs = nn.Softmax(THETA * hiddenCorrelation).view(-1, 1)
+				hiddenProbs = torch.nn.functional.softmax(THETA * hiddenCorrelation).view(-1, 1)
 
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
