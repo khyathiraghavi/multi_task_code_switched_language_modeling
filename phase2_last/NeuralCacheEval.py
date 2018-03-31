@@ -78,27 +78,27 @@ def evaluate(data):
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				
-				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
-				print ("target word: " + str(Y[wordIndex].data[0]))				
-				print ("word cache:" + str(slicedWordCache.max(1)[1]))
+				#print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
+				#print ("target word: " + str(Y[wordIndex].data[0]))				
+				#print ("word cache:" + str(slicedWordCache.max(1)[1]))
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
-				print("hiddenCorrelation: " + str(hiddenCorrelation.size()))
+				#print("hiddenCorrelation: " + str(hiddenCorrelation.size()))
 
 				#Pass the correlation values through a softmax so we can think of them as probabilities
 				hiddenProbs = torch.nn.functional.softmax(THETA * hiddenCorrelation).view(-1, 1)
-				print("hiddenProbs: " + str(hiddenProbs.size()))
+				#print("hiddenProbs: " + str(hiddenProbs.size()))
 
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
 				cacheProbs = (hiddenProbs.expand_as(slicedWordCache) * slicedWordCache).sum(0).squeeze()
-				print("cacheProbs: " + str(cacheProbs.size()))
+				#print("cacheProbs: " + str(cacheProbs.size()))
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
-				print("word probs:" + str(cacheProbs.max(0)[0]))
+				#print("word probs:" + str(cacheProbs.max(0)[0]))
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
-				print("finalProbs: " + str(finalProbs.size()))
+				#print("finalProbs: " + str(finalProbs.size()))
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			print("Target Probs:" + str(float(probOfTargetWord[0])))
