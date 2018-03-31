@@ -1,4 +1,5 @@
 from torch.autograd import Variable
+from constants import *
 
 class Batching(object):
     def __init__(self):
