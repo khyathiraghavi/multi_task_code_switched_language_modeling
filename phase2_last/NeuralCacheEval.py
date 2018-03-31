@@ -83,7 +83,7 @@ def evaluate(data):
 
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
-				cacheProbs = hiddenProbs.expand_as(slicedWordCache) * slicedWordCache.sum(0).squeeze()
+				cacheProbs = (hiddenProbs.expand_as(slicedWordCache) * slicedWordCache).sum(0).squeeze()
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
