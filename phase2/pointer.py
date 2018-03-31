@@ -70,10 +70,29 @@ def evaluate(data_source, batch_size=10, window=args.window):
 		output_flat = output.view(-1, ntokens)
 		###
 		# Fill pointer history
-		start_idx = len(next_word_history) if next_word_history is not None else 0
-		next_word_history = torch.cat([one_hot(t.data[0], ntokens) for t in targets]) if next_word_history is None else torch.cat([next_word_history, torch.cat([one_hot(t.data[0], ntokens) for t in targets])])
+		if next_word_history is not None:
+			start_idx = len(next_word_history) 
+		else:
+			start_idx = 0
+
+
+
+		if next_word_history is None:
+			next_word_history = torch.cat([one_hot(t.data[0], ntokens) for t in targets])
+		else:
+			next_word_history = torch.cat([next_word_history, torch.cat([one_hot(t.data[0], ntokens) for t in targets])])
+		
+
+
+
 		#print(next_word_history)
-		pointer_history = Variable(rnn_out.data) if pointer_history is None else torch.cat([pointer_history, Variable(rnn_out.data)], dim=0)
+		if pointer_history is None:
+			pointer_history = Variable(rnn_out.data) 
+		else:
+			pointer_history = torch.cat([pointer_history, Variable(rnn_out.data)], dim=0)
+
+
+
 		#print(pointer_history)
 		###
 		# Built-in cross entropy
@@ -91,14 +110,19 @@ def evaluate(data_source, batch_size=10, window=args.window):
 		for idx, vocab_loss in enumerate(softmax_output_flat):
 			p = vocab_loss
 			if start_idx + idx > window:
-				valid_next_word = next_word_history[start_idx + idx - window:start_idx + idx]
-				valid_pointer_history = pointer_history[start_idx + idx - window:start_idx + idx]
-				logits = torch.mv(valid_pointer_history, rnn_out[idx])
+
+				valid_next_word       = next_word_history[start_idx + idx - window:start_idx + idx]
+				valid_pointer_history =   pointer_history[start_idx + idx - window:start_idx + idx]
+				logits = torch.mv(valid_pointer_history, rnn_out[idx]) #dot all vectors in valid_pointer_history by rnn_out[idx], output a single vector of scalars
 				theta = args.theta
+				
 				ptr_attn = torch.nn.functional.softmax(theta * logits).view(-1, 1)
 				ptr_dist = (ptr_attn.expand_as(valid_next_word) * valid_next_word).sum(0).squeeze()
 				lambdah = args.lambdasm
-				p = lambdah * ptr_dist + (1 - lambdah) * vocab_loss
+				
+				p = lambdah * ptr_dist + (1 - lambdah) * vocab_loss       
+
+
 			###
 			target_loss = p[targets[idx].data]
 			loss += (-torch.log(target_loss)).data[0]
