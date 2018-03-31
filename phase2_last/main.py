@@ -167,6 +167,7 @@ for epoch in range(0, EPOCH_MAX):
     else: # sgd
         val_loss = evaluate(val_data, 'val_mode')
 
+        saving_model(val_loss)
         if stochastic == True:
             t = len(val_loss_interval)
             if (t>NONMONO and val_loss > min(val_loss_interval[:-NONMONO])):
