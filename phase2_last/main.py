@@ -77,7 +77,7 @@ def evaluate(data, mode):
         total_loss += len(X) * criterion(predictions, Y).data
         hidden = repackage_hidden(hidden)
     final_loss = total_loss[0] / len(data)
-    print("Epoch: "+str(epoch)+" Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
+    print("Epoch: "+str(epoch) + " Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
     '''
     if final_loss < loss_least:
             with open(MODEL_SAVE_PATH, 'wb') as f:

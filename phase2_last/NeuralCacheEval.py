@@ -32,6 +32,8 @@ def oneHotify(hotIndex, size, datatype=np.float32, cuda=True):
 
 def evaluate(data):
 
+	criterion = nn.CrossEntropyLoss()
+	
 	wordCache = None
 	hiddenCache = None
 	windowStartIndex = None
@@ -78,7 +80,7 @@ def evaluate(data):
 
 				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
 				print ("target word: " + str(Y[wordIndex].data[0]))				
-				print ("word cache:" + str(wordCache.max(1)[1]))
+				print ("word cache:" + str(slicedWordCache.max(1)[1]))
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
