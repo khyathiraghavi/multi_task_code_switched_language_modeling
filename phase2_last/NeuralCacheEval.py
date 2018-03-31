@@ -62,7 +62,7 @@ def evaluate(data):
 
 			#If we are outside the cache (we always should be) use the cache
 			#This can also be seen as... if the cache has been constructed
-			if windowStartIndex + wordIndex > CACHE_WINDOW_SIZE
+			if windowStartIndex + wordIndex > CACHE_WINDOW_SIZE:
 				#Construct the window of the cache that we are going to be operating over
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
