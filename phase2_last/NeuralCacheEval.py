@@ -76,7 +76,7 @@ def evaluate(data):
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
-				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden)
+				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
 
 				#Pass the correlation values through a softmax so we can think of them as probabilities
 				hiddenProbs = nn.softmax(THETA * hiddenCorrelation).view(-1, 1)
