@@ -65,6 +65,7 @@ def evaluate(data):
 
 		currentLoss = 0
 		softmaxOutputs = torch.nn.functional.softmax(predictions)
+		preds = []
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
@@ -89,9 +90,10 @@ def evaluate(data):
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
-
-			currentLoss += criterion(finalProbs, Y[wordIndex])
+			preds.append(finalProbs)
+			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			#currentLoss += (-torch.log(probOfTargetWord))
+		currentLoss += criterion(torch.stack(preds), Y[wordIndex])
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
