@@ -96,12 +96,12 @@ def evaluate(data):
 				print("cacheProbs: " + str(cacheProbs.size()))
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
-				print("word probs:" + str(cacheProbs.max(1)[0]))
+				print("word probs:" + str(cacheProbs.max(0)[0]))
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
 				print("finalProbs: " + str(finalProbs.size()))
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			print("Target Probs:" + str(probOfTargetWord))
+			print("Target Probs:" + str(float(probOfTargetWord))
 			currentLoss += (-torch.log(probOfTargetWord))
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
