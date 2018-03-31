@@ -75,8 +75,8 @@ def evaluate(data):
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 
-				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
-				print ("target word: " + str(wordIndex))
+				#print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
+				#print ("target word: " + str(wordIndex))
 				
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
@@ -94,7 +94,7 @@ def evaluate(data):
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			currentLoss += (-torch.log(probOfTargetWord))
-		totalLoss += currentLoss/TEST_BATCH_SIZE
+		totalLoss += currentLoss/(data.size(0) - 1)
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
