@@ -98,6 +98,7 @@ def evaluate(data):
 if(__name__ == "__main__"):
 	parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
 	parser.add_argument('--cuda', action='store_false', help='use CUDA')
+	parser.add_argument('--save', type=str,default='best.pt', help='model to use the pointer over')
 	args = parser.parse_args()
 
 	torch.manual_seed(RNG_SEED)
@@ -122,10 +123,14 @@ if(__name__ == "__main__"):
 	vocabSize = len(corpus.dictionary)
 	model = model.RNNModel(vocabSize)
 
-	# enable GPU model when run with cuda
-	if args.cuda:
-		model.cuda()
-
+	# Load the best saved model.
+	with open(args.save, 'rb') as f:
+		if not args.cuda:
+			model = torch.load(f, map_location=lambda storage, loc: storage)
+		else:
+			model = torch.load(f)
+			model.cuda()
+	print(model)
 
 	# Run on val data.
 	valLoss = evaluate(val_data)
