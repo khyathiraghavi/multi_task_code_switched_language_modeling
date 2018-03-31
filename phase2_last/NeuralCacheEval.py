@@ -12,6 +12,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
+CACHE_WINDOW_SIZE = 5
 
 def repackage_hidden(h):
     """Wraps hidden states in new Variables, to detach them from their history."""
@@ -74,6 +75,10 @@ def evaluate(data):
 				#Construct the window of the cache that we are going to be operating over
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
+
+				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
+				print ("target word: " + str(wordIndex))				
+				print ("word cache:" + str(wordCache))
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
