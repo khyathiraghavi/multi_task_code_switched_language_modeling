@@ -62,7 +62,7 @@ def evaluate(data):
 			windowStartIndex = len(wordCache)
 
 		currentLoss = 0
-		softmaxOutputs = torch.nn.functional.softmax(predictions)
+		softmaxOutputs = torch.nn.functional.Softmax(predictions)
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
@@ -79,7 +79,7 @@ def evaluate(data):
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
 
 				#Pass the correlation values through a softmax so we can think of them as probabilities
-				hiddenProbs = nn.softmax(THETA * hiddenCorrelation).view(-1, 1)
+				hiddenProbs = nn.Softmax(THETA * hiddenCorrelation).view(-1, 1)
 
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
