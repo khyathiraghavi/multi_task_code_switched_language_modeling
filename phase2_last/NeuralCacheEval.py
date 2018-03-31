@@ -13,6 +13,13 @@ from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
 
+def repackage_hidden(h):
+    """Wraps hidden states in new Variables, to detach them from their history."""
+    if type(h) == Variable:
+        return Variable(h.data)
+    else:
+        return tuple(repackage_hidden(v) for v in h)
+
 def oneHotify(hotIndex, size, datatype=np.float32, cuda=True):
 	oneHot = np.zeros((1, size), datatype)
 	oneHot[0][hotIndex] = 1
