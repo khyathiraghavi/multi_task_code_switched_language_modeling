@@ -62,7 +62,7 @@ def evaluate(data):
 			windowStartIndex = len(wordCache)
 
 		currentLoss = 0
-		softmaxOutputs = torch.nn.functional.Softmax(predictions)
+		softmaxOutputs = torch.nn.functional.softmax(predictions)
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
