@@ -3,7 +3,7 @@ import argparse
 import torch
 from torch.autograd import Variable
 
-from datacontroller import data
+from dataController import data
 from models import model
 
 parser = argparse.ArgumentParser(description='Language Model')
