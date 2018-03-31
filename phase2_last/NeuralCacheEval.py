@@ -11,6 +11,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+TEST_BATCH_SIZE = 1
+
 def oneHotify(hotIndex, size, datatype=np.float32, cuda=True):
 	oneHot = np.zeros((1, size), datatype)
 	oneHot[0][hotIndex] = 1
@@ -20,7 +22,6 @@ def oneHotify(hotIndex, size, datatype=np.float32, cuda=True):
 	else:
 		return result
 
-
 def evaluate(data):
 
 	wordCache = None
@@ -29,7 +30,7 @@ def evaluate(data):
 	
 	model.eval()
 	totalLoss = 0
-	uncachedHiddenState = model.init_hidden(bsz)
+	uncachedHiddenState = model.init_hidden(TEST_BATCH_SIZE)
 	for i in range(0, data.size(0) - 1, BPTT):
 		
 		X, Y = batching.get_batch(data, i, evaluation=True)
@@ -40,11 +41,11 @@ def evaluate(data):
 		#Set our starting position for the window that will keep track of the cache
 		#Update the words in the cache based on the one hot vectors for the targets
 		#Update the hidden states in the cache based on what has been generated before
-		oneHots = [oneHotify(label.data[0], vocabSize) for label in Y]
+		oneHots =  torch.cat([oneHotify(label.data[0], vocabSize) for label in Y])
 		hiddenValuesToCache = Variable(outerMostHidden.data)
 		#If the cache hasnt been initialized yet...
 		if wordCache == None:
-			wordCache = torch.cat([oneHots])
+			wordCache = oneHots
 			hiddenCache = hiddenValuesToCache
 			windowStartIndex = 0
 		#If the cache has been initialized...
@@ -107,8 +108,6 @@ if __name__ == "__main__":
 			print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 		else:
 			torch.cuda.manual_seed(RNG_SEED)
-
-	TEST_BATCH_SIZE = 1
 
 	##### LOADING DATA #####
 
