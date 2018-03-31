@@ -51,6 +51,7 @@ model = model.RNNModel(num_tokens)
 
 # enable GPU model when run with cuda
 if args.cuda:
+    print("Using cuda")
     model.cuda()
 
 
@@ -77,18 +78,28 @@ def evaluate(data, mode):
         hidden = repackage_hidden(hidden)
     final_loss = total_loss[0] / len(data)
     print("Epoch: "+str(epoch)+" Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
-
+    '''
     if final_loss < loss_least:
             with open(MODEL_SAVE_PATH, 'wb') as f:
                 torch.save(model, f)
             loss_least = final_loss
+    '''
     return final_loss
 
 
 optimizer = torch.optim.SGD(model.parameters(), lr=INITIAL_LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 stochastic = True
 
+def saving_model(final_loss):
+    global loss_least
+    if final_loss < loss_least:
+            with open(MODEL_SAVE_PATH, 'wb') as f:
+                torch.save(model, f)
+            loss_least = final_loss
+    return
+
 def train(stochastic):
+    model.train()
     global optimizer
     if stochastic == False:
         optimizer = torch.optim.ASGD(model.parameters(), lr=INITIAL_LEARNING_RATE, t0=0, \
@@ -111,7 +122,6 @@ def train(stochastic):
         lr2 = optimizer.param_groups[0]['lr']
         optimizer.param_groups[0]['lr'] = lr2 * window / BPTT
 
-        model.train()
         X, Y = batching.get_batch(train_data, i, seq_len=window)
 
         hidden = repackage_hidden(hidden)
@@ -145,13 +155,14 @@ for epoch in range(0, EPOCH_MAX):
 
         loss_val = evaluate(val_data, 'val_mode')
 
-        tmp = {}
+        param_temp = {}
         for prm in model.parameters():
-            tmp[prm] = prm.data.clone()
+            param_temp[prm] = prm.data.clone()
             prm.data = optimizer.state[prm]['ax'].clone()
         
-        #for prm in model.parameters():
-        #    prm.data = tmp[prm].clone()
+        saving_model(loss_val)
+        for prm in model.parameters():
+            prm.data = param_temp[prm].clone()
 
     else: # sgd
         val_loss = evaluate(val_data, 'val_mode')
