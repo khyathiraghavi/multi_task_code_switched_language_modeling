@@ -77,8 +77,8 @@ def evaluate(data):
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 
 				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
-				print ("target word: " + str(wordIndex))				
-				print ("word cache:" + str(wordCache.max(0)[1]))
+				print ("target word: " + str(Y[wordIndex].data[0]))				
+				print ("word cache:" + str(wordCache.max(1)[1]))
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
