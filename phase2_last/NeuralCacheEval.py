@@ -93,8 +93,8 @@ def evaluate(data):
 			preds.append(finalProbs)
 			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			#currentLoss += (-torch.log(probOfTargetWord))
-		currentLoss += criterion(torch.stack(preds), Y)
-		totalLoss += currentLoss/TEST_BATCH_SIZE
+		currentLoss += criterion(torch.stack(preds), Y)/TEST_BATCH_SIZE
+		#currentLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
