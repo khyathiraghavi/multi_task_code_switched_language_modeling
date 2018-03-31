@@ -51,7 +51,7 @@ def evaluate(data):
 		oneHots =  torch.cat([oneHotify(label.data[0], vocabSize) for label in Y])
 		hiddenValuesToCache = Variable(outerMostHidden.data)
 		#If the cache hasnt been initialized yet...
-		if wordCache == None:
+		if wordCache is None:
 			wordCache = oneHots
 			hiddenCache = hiddenValuesToCache
 			windowStartIndex = 0
