@@ -43,7 +43,7 @@ def evaluate(data):
 		oneHots = [oneHotify(label.data[0], vocabSize) for label in Y]
 		hiddenValuesToCache = Variable(outerMostHidden.data)
 		#If the cache hasnt been initialized yet...
-		if(wordCache == None):
+		if wordCache == None:
 			wordCache = torch.cat([oneHots])
 			hiddenCache = hiddenValuesToCache
 			windowStartIndex = 0
@@ -62,7 +62,7 @@ def evaluate(data):
 
 			#If we are outside the cache (we always should be) use the cache
 			#This can also be seen as... if the cache has been constructed
-			if(windowStartIndex + wordIndex > CACHE_WINDOW_SIZE)
+			if windowStartIndex + wordIndex > CACHE_WINDOW_SIZE
 				#Construct the window of the cache that we are going to be operating over
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
@@ -95,7 +95,7 @@ def evaluate(data):
 
 
 
-if(__name__ == "__main__"):
+if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
 	parser.add_argument('--cuda', action='store_false', help='use CUDA')
 	parser.add_argument('--save', type=str,default='best.pt', help='model to use the pointer over')
