@@ -93,14 +93,14 @@ def evaluate(data):
 			preds.append(finalProbs)
 			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			#currentLoss += (-torch.log(probOfTargetWord))
-		currentLoss += criterion(torch.stack(preds), Y)/TEST_BATCH_SIZE
+		currentLoss += criterion(torch.stack(preds), Y)/len(softmaxOutputs)
 		#currentLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
 		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
 
-	final_loss = totalLoss[0] / (data.size(0) - 1)
+	final_loss = totalLoss / (data.size(0) - 1)
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
 
 	return final_loss
