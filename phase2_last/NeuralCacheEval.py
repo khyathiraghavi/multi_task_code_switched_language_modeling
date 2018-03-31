@@ -101,7 +101,7 @@ def evaluate(data):
 				print("finalProbs: " + str(finalProbs.size()))
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			print("Target Probs:" + str(float(probOfTargetWord)))
+			print("Target Probs:" + str(float(probOfTargetWord.data[0])))
 			currentLoss += (-torch.log(probOfTargetWord))
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
