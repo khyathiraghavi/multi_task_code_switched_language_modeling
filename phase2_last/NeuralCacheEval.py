@@ -94,7 +94,7 @@ def evaluate(data):
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
-		hiddenCache = hiddenProbs[-CACHE_WINDOW_SIZE:]
+		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
 
 	final_loss = totalLoss[0] / len(data)
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
