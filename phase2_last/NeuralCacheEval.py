@@ -114,7 +114,7 @@ if __name__ == "__main__":
 	corpus = data.Corpus(DATA_PATH)
 	# retaining the same batch size to reproduce the results.
 	batching = Batching()
-	val_data = batching.batchify(corpus.valid)
+	val_data = batching.batchify(corpus.valid, TEST_BATCH_SIZE, args)
 	test_data = batching.batchify(corpus.test, TEST_BATCH_SIZE, args)
 
 	print ("done batchifying")
