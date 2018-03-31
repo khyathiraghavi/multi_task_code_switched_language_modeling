@@ -65,7 +65,7 @@ def evaluate(data):
 			windowStartIndex = len(wordCache)
 
 		currentLoss = 0
-		softmaxOutputs = torch.nn.functional.softmax(predictions).view(-1, 1)
+		softmaxOutputs = torch.nn.functional.softmax(predictions)
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
@@ -77,7 +77,7 @@ def evaluate(data):
 				#Construct the window of the cache that we are going to be operating over
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
-
+				
 				print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
 				print ("target word: " + str(Y[wordIndex].data[0]))				
 				print ("word cache:" + str(slicedWordCache.max(1)[1]))
