@@ -65,7 +65,7 @@ def evaluate(data):
 			windowStartIndex = len(wordCache)
 
 		currentLoss = 0
-		softmaxOutputs = torch.nn.functional.softmax(predictions)
+		softmaxOutputs = torch.nn.functional.softmax(predictions).view(-1, 1)
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
@@ -84,19 +84,24 @@ def evaluate(data):
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
+				print("hiddenCorrelation: " + str(hiddenCorrelation.size()))
 
 				#Pass the correlation values through a softmax so we can think of them as probabilities
 				hiddenProbs = torch.nn.functional.softmax(THETA * hiddenCorrelation).view(-1, 1)
+				print("hiddenProbs: " + str(hiddenProbs.size()))
 
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
 				cacheProbs = (hiddenProbs.expand_as(slicedWordCache) * slicedWordCache).sum(0).squeeze()
+				print("cacheProbs: " + str(cacheProbs.size()))
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
+				print("word probs:" + str(cacheProbs.max(1)[0]))
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
+				print("finalProbs: " + str(finalProbs.size()))
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			print probOfTargetWord
+			print("Target Probs:" + str(probOfTargetWord))
 			currentLoss += (-torch.log(probOfTargetWord))
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
