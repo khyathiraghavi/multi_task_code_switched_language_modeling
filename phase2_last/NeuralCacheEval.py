@@ -13,6 +13,8 @@ from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
 
+criterion = nn.CrossEntropyLoss()
+
 def repackage_hidden(h):
     """Wraps hidden states in new Variables, to detach them from their history."""
     if type(h) == Variable:
@@ -75,10 +77,6 @@ def evaluate(data):
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 				slicedHiddenCache = hiddenCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
 
-				#print ("window: " + str(windowStartIndex + wordIndex - CACHE_WINDOW_SIZE) + ":" + str(windowStartIndex + wordIndex))
-				#print ("target word: " + str(wordIndex))
-				
-
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
 
@@ -92,15 +90,15 @@ def evaluate(data):
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
 
-			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			currentLoss += (-torch.log(probOfTargetWord))
-		totalLoss += currentLoss/(data.size(0) - 1)
+			currentLoss += criterion(finalProbs, Y[wordIndex].data[0])
+			#currentLoss += (-torch.log(probOfTargetWord))
+		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
 		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
 
-	final_loss = totalLoss[0] / len(data)
+	final_loss = totalLoss[0] / (data.size(0) - 1)
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
 
 	return final_loss
