@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
-CACHE_WINDOW_SIZE = 5
+CACHE_WINDOW_SIZE = 25
 
 def repackage_hidden(h):
     """Wraps hidden states in new Variables, to detach them from their history."""
@@ -33,7 +33,7 @@ def oneHotify(hotIndex, size, datatype=np.float32, cuda=True):
 def evaluate(data):
 
 	criterion = nn.CrossEntropyLoss()
-	
+
 	wordCache = None
 	hiddenCache = None
 	windowStartIndex = None
@@ -96,6 +96,7 @@ def evaluate(data):
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
 
 			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
+			print probOfTargetWord
 			currentLoss += (-torch.log(probOfTargetWord))
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
