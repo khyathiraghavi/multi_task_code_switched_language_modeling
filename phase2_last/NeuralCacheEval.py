@@ -40,7 +40,9 @@ def evaluate(data):
 	model.eval()
 	totalLoss = 0
 	uncachedHiddenState = model.init_hidden(TEST_BATCH_SIZE)
+	steps = 0
 	for i in range(0, data.size(0) - 1, BPTT):
+		steps += 1
 		
 		X, Y = batching.get_batch(data, i, evaluation=True)
 		output, uncachedHiddenState = model(X, uncachedHiddenState)
@@ -71,8 +73,7 @@ def evaluate(data):
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
 			finalProbs = modelProbs
 
-			#If we are outside the cache (we always should be) use the cache
-			#This can also be seen as... if the cache has been constructed
+			#If we are outside the cache use the cache
 			if windowStartIndex + wordIndex > CACHE_WINDOW_SIZE:
 				#Construct the window of the cache that we are going to be operating over
 				slicedWordCache   =   wordCache[windowStartIndex + wordIndex - CACHE_WINDOW_SIZE:windowStartIndex + wordIndex]
@@ -93,7 +94,7 @@ def evaluate(data):
 			preds.append(finalProbs)
 			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			#currentLoss += (-torch.log(probOfTargetWord))
-		currentLoss += criterion(torch.stack(preds), Y)/len(softmaxOutputs)
+		currentLoss += criterion(torch.stack(preds), Y)
 		print(currentLoss)
 		#currentLoss += currentLoss/TEST_BATCH_SIZE
 		
@@ -101,7 +102,7 @@ def evaluate(data):
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
 		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
 
-	final_loss = totalLoss / (data.size(0) - 1)
+	final_loss = totalLoss / steps
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
 
 	return final_loss
