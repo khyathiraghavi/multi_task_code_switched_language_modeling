@@ -94,6 +94,7 @@ def evaluate(data):
 			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
 			#currentLoss += (-torch.log(probOfTargetWord))
 		currentLoss += criterion(torch.stack(preds), Y)/len(softmaxOutputs)
+		print(currentLoss)
 		#currentLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
