@@ -97,6 +97,25 @@ def saving_model(final_loss):
                 torch.save(model, f)
             loss_least = final_loss
     return
+resume = True
+
+def model_load(fn):
+    global model
+    with open(fn, 'rb') as f:
+        model = torch.load(f)
+
+if resume:
+    print('Resuming from last saved point')
+    model_load(MODEL_SAVE_PATH)
+    optimizer.param_groups[0]['lr'] = 10
+    '''
+    model.dropouti, model.dropouth, model.dropout, args.dropoute = args.dropouti, args.dropouth, args.dropout, args.dropoute
+    if args.wdrop:
+        from weight_drop import WeightDrop
+        for rnn in model.rnns:
+            if type(rnn) == WeightDrop: rnn.dropout = args.wdrop
+            elif rnn.zoneout > 0: rnn.zoneout = args.wdrop
+    '''
 
 def train(stochastic):
     model.train()

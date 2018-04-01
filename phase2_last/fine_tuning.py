@@ -207,7 +207,7 @@ for epoch in range(0, EPOCH_MAX):
 
     #if stochastic == True:
     t = len(val_loss_interval)
-    if (t>NONMONO and val_loss > min(val_loss_interval[:-NONMONO])):
+    if (t>NONMONO and loss_val > min(val_loss_interval[:-NONMONO])):
         print('Triggering ASGD')
         
     val_loss_interval.append(loss_val)
