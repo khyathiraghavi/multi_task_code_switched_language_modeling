@@ -80,7 +80,7 @@ if args.cuda:
 
 # define loss
 criterion = nn.CrossEntropyLoss()
-
+loss_least = 1000000
 
 def evaluate(data, mode):
     if mode == 'val_mode':
