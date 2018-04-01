@@ -210,7 +210,7 @@ for epoch in range(0, EPOCH_MAX):
     if (t>NONMONO and val_loss > min(val_loss_interval[:-NONMONO])):
         print('Triggering ASGD')
         
-    val_loss_interval.append(val_loss)
+    val_loss_interval.append(loss_val)
 
 
 # Loading the best model
