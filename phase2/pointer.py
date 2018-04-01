@@ -114,13 +114,17 @@ def evaluate(data_source, batch_size=10, window=args.window):
 				valid_next_word       = next_word_history[start_idx + idx - window:start_idx + idx]
 				valid_pointer_history =   pointer_history[start_idx + idx - window:start_idx + idx]
 				logits = torch.mv(valid_pointer_history, rnn_out[idx]) #dot all vectors in valid_pointer_history by rnn_out[idx], output a single vector of scalars
+				print("logits: " + str(logits.size()))
 				theta = args.theta
 				
 				ptr_attn = torch.nn.functional.softmax(theta * logits).view(-1, 1)
+				print("ptr_attn: " + str(ptr_attn.size()))
 				ptr_dist = (ptr_attn.expand_as(valid_next_word) * valid_next_word).sum(0).squeeze()
+				print("ptr_dist: " + str(ptr_dist.size()))
 				lambdah = args.lambdasm
 				
 				p = lambdah * ptr_dist + (1 - lambdah) * vocab_loss       
+				print("p: " + str(p.size()))
 
 
 			###

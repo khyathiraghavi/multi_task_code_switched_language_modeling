@@ -12,6 +12,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
+CACHE_WINDOW_SIZE = 500
+LAMBDA = 0.0
 
 criterion = nn.CrossEntropyLoss()
 
@@ -40,10 +42,9 @@ def evaluate(data):
 	model.eval()
 	totalLoss = 0
 	uncachedHiddenState = model.init_hidden(TEST_BATCH_SIZE)
-	steps = 0
 	for i in range(0, data.size(0) - 1, BPTT):
-		steps += 1		
 		X, Y = batching.get_batch(data, i, evaluation=True)
+		print(X.size(), Y.size())
 		output, uncachedHiddenState = model(X, uncachedHiddenState)
 		predictions = output.view(-1, vocabSize)
 		outerMostHidden = model.rnns_before_drop[-1].squeeze()
@@ -65,13 +66,11 @@ def evaluate(data):
 			windowStartIndex = len(wordCache)
 
 		softmaxOutputs = torch.nn.functional.softmax(predictions)
-		preds = []
 		currentLoss = 0
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
 			finalProbs = modelProbs
-
 			#If we are outside the cache use the cache
 			if windowStartIndex + wordIndex > CACHE_WINDOW_SIZE:
 				#Construct the window of the cache that we are going to be operating over
@@ -80,26 +79,24 @@ def evaluate(data):
 
 				#Construct a vector of values that describe how well outerMostHidden correlates with the hidden values in the cache 
 				hiddenCorrelation = torch.mv(slicedHiddenCache, outerMostHidden[wordIndex])
-
 				#Pass the correlation values through a softmax so we can think of them as probabilities
 				hiddenProbs = torch.nn.functional.softmax(THETA * hiddenCorrelation).view(-1, 1)
-
 				#Calculate cache probabilities based on the probs from the softmax above times the one hot vectors we calculated earlier. 
 				#As the values in slicedWordCache are one hot vectors this will not change the nature of this distribution
 				cacheProbs = (hiddenProbs.expand_as(slicedWordCache) * slicedWordCache).sum(0).squeeze()
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
-			
-			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			currentLoss += (-torch.log(probOfTargetWord))
+			probOfTargetWord = finalProbs[Y[wordIndex].data]
+			currentLoss += (-torch.log(probOfTargetWord)).data[0]
+		print(currentLoss/TEST_BATCH_SIZE, wordIndex)
 		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
 		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
-
-	final_loss = float(totalLoss) / float(steps)
+	print(totalLoss, len(data))
+	final_loss = totalLoss/ len(data)
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
 
 	return final_loss
