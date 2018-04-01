@@ -179,7 +179,7 @@ with open(MODEL_SAVE_PATH, 'rb') as m:
 lr = INITIAL_LEARNING_RATE
 val_loss_interval = []
 
-loss_least = evaluate(val_data)
+loss_least = evaluate(val_data, 'val_mode')
 
 
 for epoch in range(0, EPOCH_MAX):
