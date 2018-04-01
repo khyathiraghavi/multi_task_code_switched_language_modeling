@@ -99,14 +99,14 @@ def saving_model(final_loss):
     return
 resume = True
 
-def model_load(MODEL_SAVE_PATH):
+def model_load(fn):
     global model, criterion, optimizer
     with open(fn, 'rb') as f:
         model, criterion, optimizer = torch.load(f)
 
 if resume:
     print('Resuming from last saved point')
-    model_load(args.resume)
+    model_load(MODEL_SAVE_PATH)
     optimizer.param_groups[0]['lr'] = 10
     '''
     model.dropouti, model.dropouth, model.dropout, args.dropoute = args.dropouti, args.dropouth, args.dropout, args.dropoute
