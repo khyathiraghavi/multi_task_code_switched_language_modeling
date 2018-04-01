@@ -101,7 +101,10 @@ def evaluate(data, mode):
         total_loss += len(X) * criterion(predictions, Y).data
         hidden = repackage_hidden(hidden)
     final_loss = total_loss[0] / len(data)
-    print("Epoch: "+str(epoch)+" Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
+    try:
+        print("Epoch: "+str(epoch)+" Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
+    except:
+        print("Val Loss: " + str(final_loss) + " Val Perplexity: " + str(math.exp(final_loss)))
 
     
     if final_loss < loss_least:
