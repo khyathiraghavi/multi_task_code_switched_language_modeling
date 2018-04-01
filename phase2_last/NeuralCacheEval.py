@@ -41,7 +41,8 @@ def evaluate(data):
 	totalLoss = 0
 	uncachedHiddenState = model.init_hidden(TEST_BATCH_SIZE)
 	steps = 0
-	for i in range(0, data.size(0) - 1, BPTT):		
+	for i in range(0, data.size(0) - 1, BPTT):
+		steps += 1		
 		X, Y = batching.get_batch(data, i, evaluation=True)
 		output, uncachedHiddenState = model(X, uncachedHiddenState)
 		predictions = output.view(-1, vocabSize)
@@ -67,7 +68,6 @@ def evaluate(data):
 		preds = []
 		currentLoss = 0
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
-			steps += 1
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
 			finalProbs = modelProbs
