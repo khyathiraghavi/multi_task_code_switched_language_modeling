@@ -41,9 +41,7 @@ def evaluate(data):
 	totalLoss = 0
 	uncachedHiddenState = model.init_hidden(TEST_BATCH_SIZE)
 	steps = 0
-	for i in range(0, data.size(0) - 1, BPTT):
-		steps += 1
-		
+	for i in range(0, data.size(0) - 1, BPTT):		
 		X, Y = batching.get_batch(data, i, evaluation=True)
 		output, uncachedHiddenState = model(X, uncachedHiddenState)
 		predictions = output.view(-1, vocabSize)
@@ -65,10 +63,11 @@ def evaluate(data):
 			hiddenCache = torch.cat([hiddenCache, hiddenValuesToCache], dim=0)
 			windowStartIndex = len(wordCache)
 
-		currentLoss = 0
 		softmaxOutputs = torch.nn.functional.softmax(predictions)
 		preds = []
+		currentLoss = 0
 		for wordIndex, modelProbs in enumerate(softmaxOutputs):
+			steps += 1
 
 			#If we dont have the cache (as determined by the if statement) then we still need to have a distribution to draw from
 			finalProbs = modelProbs
@@ -91,18 +90,16 @@ def evaluate(data):
 
 				#Calculate the combined probabilities for the cache and the model based on a linear interpolation
 				finalProbs = LAMBDA * cacheProbs + (1-LAMBDA) * modelProbs
-			preds.append(finalProbs)
-			#probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
-			#currentLoss += (-torch.log(probOfTargetWord))
-		currentLoss += criterion(torch.stack(preds), Y)
-		print(currentLoss)
-		#currentLoss += currentLoss/TEST_BATCH_SIZE
+			
+			probOfTargetWord = finalProbs[Y[wordIndex].data[0]].data
+			currentLoss += (-torch.log(probOfTargetWord))
+		totalLoss += currentLoss/TEST_BATCH_SIZE
 		
 		uncachedHiddenState = repackage_hidden(uncachedHiddenState)
 		wordCache = wordCache[-CACHE_WINDOW_SIZE:]
 		hiddenCache = hiddenCache[-CACHE_WINDOW_SIZE:]
 
-	final_loss = totalLoss / steps
+	final_loss = float(totalLoss) / float(steps)
 	print("Evaluation - Loss: " + str(final_loss) + " Perplexity: " + str(math.exp(final_loss)))
 
 	return final_loss
