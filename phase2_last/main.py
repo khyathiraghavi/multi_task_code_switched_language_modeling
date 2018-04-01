@@ -100,9 +100,9 @@ def saving_model(final_loss):
 resume = True
 
 def model_load(fn):
-    global model, criterion
+    global model
     with open(fn, 'rb') as f:
-        model, criterion = torch.load(f)
+        model = torch.load(f)
 
 if resume:
     print('Resuming from last saved point')
