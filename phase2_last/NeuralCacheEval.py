@@ -13,6 +13,9 @@ from torch.autograd import Variable
 
 TEST_BATCH_SIZE = 1
 
+THETA = 1.75
+LAMBDA = 0.09
+
 criterion = nn.CrossEntropyLoss()
 
 def repackage_hidden(h):
