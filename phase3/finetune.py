@@ -13,7 +13,7 @@ import model
 from utils import batchify, get_batch, repackage_hidden
 
 parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
-parser.add_argument('--data', type=str, default='data/penn/',
+parser.add_argument('--data', type=str, default='/root/WT2',
                     help='location of the data corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
@@ -104,7 +104,6 @@ criterion = nn.CrossEntropyLoss()
 
 def evaluate(data_source, batch_size=10):
     # Turn on evaluation mode which disables dropout.
-    if args.model == 'QRNN': model.reset()
     model.eval()
     total_loss = 0
     ntokens = len(corpus.dictionary)
@@ -120,7 +119,6 @@ def evaluate(data_source, batch_size=10):
 
 def train():
     # Turn on training mode which enables dropout.
-    if args.model == 'QRNN': model.reset()
     total_loss = 0
     start_time = time.time()
     ntokens = len(corpus.dictionary)
