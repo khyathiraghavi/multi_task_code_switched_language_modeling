@@ -1,7 +1,7 @@
 import io
 from nltk.tokenize.moses import MosesTokenizer
 
-INPUT_PATH = "../spellNormalized_2000.txt"
+INPUT_PATH = "../spellNormalized_Full.txt"
 OUTPUT_L_PATH = "langs.txt"
 OUTPUT_W_PATH = "words.txt"
 
