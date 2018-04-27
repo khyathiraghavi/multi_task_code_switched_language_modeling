@@ -96,6 +96,7 @@ test_data_words, test_data_langs   = batchify(corpus.test,  langCorpus.test,  te
 ###############################################################################
 
 ntokens = len(corpus.dictionary)
+
 model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.tied)
 if args.cuda:
     model.cuda()
@@ -142,7 +143,7 @@ def train():
         optimizer.param_groups[0]['lr'] = lr2 * seq_len / args.bptt
         model.train()
 
-        data, targets     = get_batch(train_data_words, i, args, seq_len=seq_len)
+        data, targets  = get_batch(train_data_words, i, args, seq_len=seq_len)
         _, langTargets = get_batch(train_data_langs, i, args, seq_len=seq_len)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
@@ -152,7 +153,7 @@ def train():
 
         output, langOutput, hidden, rnn_hs, dropped_rnn_hs = model(data, hidden, return_h=True)
         raw_loss      = criterion(output.view(-1, ntokens),     targets)
-        raw_lang_loss = criterion(langOutput.view(-1, ntokens), langTargets)
+        raw_lang_loss = criterion(langOutput.view(-1, args.nlang), langTargets)
 
         loss = raw_loss + raw_lang_loss
         # Activiation Regularization

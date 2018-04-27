@@ -81,13 +81,13 @@ class RNNModel(nn.Module):
 
         langPred = self.langDecoder(predBasis)
 
-        predBasisLang = torch.cat((predBasis, langPred), 1)
+        predBasisLang = torch.cat((predBasis, langPred), 2)
 
         langTran = self.langTransformer(predBasisLang)
 
-        decoded = self.decoder(predBasis)
+        decoded = self.decoder(langTran)
         result = decoded.view(output.size(0), output.size(1), decoded.size(1))
-        langResult = langTran.view(output.size(0), output.size(1), decoded.size(1))
+        langResult = langTran.view(output.size(0), output.size(1), langTran.size(1))
 
         if return_h:
             return result, langResult, hidden, raw_outputs, outputs
