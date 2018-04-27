@@ -9,7 +9,7 @@ from weight_drop import WeightDrop
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nLang, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
@@ -22,8 +22,8 @@ class RNNModel(nn.Module):
             self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
         self.rnns = torch.nn.ModuleList(self.rnns)
 
-        self.langDecoder = nn.Linear(nhid, nLang)
-        self.langTransformer = nn.Linear(nhid+nLang, nhid)
+        self.langDecoder = nn.Linear(nhid, nlang)
+        self.langTransformer = nn.Linear(nhid+nlang, nhid)
 
         self.decoder = nn.Linear(nhid, ntoken)
 
@@ -87,11 +87,11 @@ class RNNModel(nn.Module):
 
         decoded = self.decoder(predBasis)
         result = decoded.view(output.size(0), output.size(1), decoded.size(1))
-
+        langResult = langPred.view(output.size(0), output.size(1), decoded.size(1))
 
         if return_h:
-            return result, langPred, hidden, raw_outputs, outputs
-        return result, langPred, hidden
+            return result, langResult, hidden, raw_outputs, outputs
+        return result, langResult, hidden
 
     def init_hidden(self, bsz):
         weight = next(self.parameters()).data

@@ -66,6 +66,8 @@ parser.add_argument('--wdecay', type=float, default=1.2e-6,
                     help='weight decay applied to all weights')
 args = parser.parse_args()
 
+args.cuda = False
+
 # Set the random seed manually for reproducibility.
 torch.manual_seed(args.seed)
 if torch.cuda.is_available():
@@ -83,9 +85,9 @@ langCorpus = data.Corpus(args.langdata)
 
 eval_batch_size = 10
 test_batch_size = 1
-train_data = batchify(corpus.train, langCorpus.train, args.batch_size, args)
-val_data = batchify(corpus.valid,   langCorpus.valid, eval_batch_size, args)
-test_data = batchify(corpus.test,   langCorpus.test,  test_batch_size, args)
+train_data_words, train_data_langs = batchify(corpus.train, langCorpus.train, args.batch_size, args)
+val_data_words, val_data_langs     = batchify(corpus.valid, langCorpus.valid, eval_batch_size, args)
+test_data_words, test_data_langs   = batchify(corpus.test,  langCorpus.test,  test_batch_size, args)
 
 ###############################################################################
 # Build the model
@@ -127,7 +129,7 @@ def train():
     ntokens = len(corpus.dictionary)
     hidden = model.init_hidden(args.batch_size)
     batch, i = 0, 0
-    while i < train_data.size(0) - 1 - 1:
+    while i < train_data_words.size(0) - 1 - 1:
         bptt = args.bptt if np.random.random() < 0.95 else args.bptt / 2.
         # Prevent excessively small or negative sequence lengths
         seq_len = max(5, int(np.random.normal(bptt, 5)))
@@ -137,7 +139,9 @@ def train():
         lr2 = optimizer.param_groups[0]['lr']
         optimizer.param_groups[0]['lr'] = lr2 * seq_len / args.bptt
         model.train()
-        data, targets = get_batch(train_data, i, args, seq_len=seq_len)
+
+        data, targets     = get_batch(train_data_words, i, args, seq_len=seq_len)
+        _, langTargets = get_batch(train_data_langs, i, args, seq_len=seq_len)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
@@ -145,9 +149,10 @@ def train():
         optimizer.zero_grad()
 
         output, langOutput, hidden, rnn_hs, dropped_rnn_hs = model(data, hidden, return_h=True)
-        raw_loss = criterion(output.view(-1, ntokens), targets)
+        raw_loss      = criterion(output.view(-1, ntokens),     targets)
+        raw_lang_loss = criterion(langOutput.view(-1, ntokens), langTargets)
 
-        loss = raw_loss
+        loss = raw_loss + raw_lang_loss
         # Activiation Regularization
         loss = loss + sum(args.alpha * dropped_rnn_h.pow(2).mean() for dropped_rnn_h in dropped_rnn_hs[-1:])
         # Temporal Activation Regularization (slowness)
@@ -165,7 +170,7 @@ def train():
             elapsed = time.time() - start_time
             print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
                     'loss {:5.2f} | ppl {:8.2f}'.format(
-                epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
+                epoch, batch, len(train_data_words) // args.bptt, optimizer.param_groups[0]['lr'],
                 elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
             total_loss = 0
             start_time = time.time()
@@ -190,7 +195,7 @@ try:
                 tmp[prm] = prm.data.clone()
                 prm.data = optimizer.state[prm]['ax'].clone()
 
-            val_loss2 = evaluate(val_data)
+            val_loss2 = evaluate(val_data_words)
             print('-' * 89)
             print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                     'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
@@ -207,7 +212,7 @@ try:
                 prm.data = tmp[prm].clone()
 
         else:
-            val_loss = evaluate(val_data, eval_batch_size)
+            val_loss = evaluate(val_data_words, eval_batch_size)
             print('-' * 89)
             print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                     'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
@@ -235,7 +240,7 @@ with open(args.save, 'rb') as f:
     model = torch.load(f)
     
 # Run on test data.
-test_loss = evaluate(test_data, test_batch_size)
+test_loss = evaluate(test_data_words, test_batch_size)
 print('=' * 89)
 print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
     test_loss, math.exp(test_loss)))

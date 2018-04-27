@@ -14,9 +14,16 @@ def batchify(data, langdata, bsz, args):
     data = data.narrow(0, 0, nbatch * bsz)
     # Evenly divide the data across the bsz batches.
     data = data.view(bsz, -1).t().contiguous()
+
+    # Trim off any extra elements that wouldn't cleanly fit (remainders).
+    langdata = langdata.narrow(0, 0, nbatch * bsz)
+    # Evenly divide the langdata across the bsz batches.
+    langdata = langdata.view(bsz, -1).t().contiguous()
+
     if args.cuda:
         data = data.cuda()
-    return data
+        langdata = langdata.cuda()
+    return data, langdata
 
 def get_batch(source, i, args, seq_len=None, evaluation=False):
     seq_len = min(seq_len if seq_len else args.bptt, len(source) - 1 - i)
