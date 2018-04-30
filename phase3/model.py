@@ -9,14 +9,18 @@ from weight_drop import WeightDrop
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, langEmbSize, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
         self.hdrop = nn.Dropout(dropouth)
         self.drop = nn.Dropout(dropout)
-        self.encoder = nn.Embedding(ntoken, ninp)
-        self.rnns = [torch.nn.LSTM(ninp if l == 0 else nhid, nhid if l != nlayers - 1 else ninp, 1, dropout=dropouth) for l in range(nlayers)]
+        self.word_encoder = nn.Embedding(ntoken, ninp)
+        self.lang_encoder = nn.Embedding(nlang,  langEmbSize)
+
+        self.rnnInputSize = ninp + langEmbSize
+
+        self.rnns = [torch.nn.LSTM(self.rnnInputSize if l == 0 else nhid, nhid if l != nlayers - 1 else ninp, 1, dropout=dropouth) for l in range(nlayers)]
         print(self.rnns)
         if wdrop:
             self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
@@ -32,12 +36,13 @@ class RNNModel(nn.Module):
         # and
         # "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling" (Inan et al. 2016)
         # https://arxiv.org/abs/1611.01462
-        self.decoder.weight = self.encoder.weight
+        self.decoder.weight = self.word_encoder.weight
 
         self.init_weights()
 
         self.rnn_type = rnn_type
         self.ninp = ninp
+        self.langEmbSize = langEmbSize
         self.nhid = nhid
         self.nlang = nlang
         self.nlayers = nlayers
@@ -48,16 +53,19 @@ class RNNModel(nn.Module):
 
     def init_weights(self):
         initrange = 0.1
-        self.encoder.weight.data.uniform_(-initrange, initrange)
+        self.word_encoder.weight.data.uniform_(-initrange, initrange)
+        self.lang_encoder.weight.data.uniform_(-initrange, initrange)
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, input, hidden, return_h=False):
-        emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if self.training else 0)
+    def forward(self, inputWords, inputLang, hidden, return_h=False):
+        wordEmb = embedded_dropout(self.word_encoder, inputWords, dropout=self.dropoute if self.training else 0)
+        wordEmb = self.lockdrop(wordEmb, self.dropouti)
 
-        emb = self.lockdrop(emb, self.dropouti)
+        langEmb = embedded_dropout(self.lang_encoder, inputLang, dropout=self.dropoute if self.training else 0)
+        langEmb = self.lockdrop(langEmb, self.dropouti)
 
-        raw_output = emb
+        raw_output = torch.cat((wordEmb, langEmb), 2)
         new_hidden = []
         raw_outputs = []
         outputs = []

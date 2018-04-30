@@ -21,6 +21,8 @@ parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--emsize', type=int, default=400,
                     help='size of word embeddings')
+parser.add_argument('--langemsize', type=int, default=16,
+                    help='size of word embeddings')
 parser.add_argument('--nhid', type=int, default=1150,
                     help='number of hidden units per layer')
 parser.add_argument('--nlayers', type=int, default=3,
@@ -84,8 +86,8 @@ langCorpus = data.Corpus(args.langdata)
 eval_batch_size = 10
 test_batch_size = 1
 train_data_words, train_data_langs = batchify(corpus.train, langCorpus.train, args.batch_size, args)
-val_data_words, val_data_langs     = batchify(corpus.valid, langCorpus.valid, eval_batch_size, args)
-test_data_words, test_data_langs   = batchify(corpus.test,  langCorpus.test,  test_batch_size, args)
+val_data_words,   val_data_langs   = batchify(corpus.valid, langCorpus.valid, eval_batch_size, args)
+test_data_words,  test_data_langs  = batchify(corpus.test,  langCorpus.test,  test_batch_size, args)
 
 ###############################################################################
 # Build the model
@@ -94,7 +96,7 @@ test_data_words, test_data_langs   = batchify(corpus.test,  langCorpus.test,  te
 ntokens = len(corpus.dictionary)
 nlang   = len(langCorpus.dictionary)
 
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop)
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.langemsize, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())
@@ -107,19 +109,20 @@ criterion = nn.CrossEntropyLoss()
 # Training code
 ###############################################################################
 
-def evaluate(data_source, batch_size=10):
+def evaluate(data_source_words, data_source_langs, batch_size=10):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0
     ntokens = len(corpus.dictionary)
     hidden = model.init_hidden(batch_size)
-    for i in range(0, data_source.size(0) - 1, args.bptt):
-        data, targets = get_batch(data_source, i, args, evaluation=True)
-        output, _, hidden = model(data, hidden)
+    for i in range(0, data_source_words.size(0) - 1, args.bptt):
+        data, targets         = get_batch(data_source_words, i, args, evaluation=True)
+        langData, langTargets = get_batch(data_source_langs, i, args, evaluation=True)
+        output, _, hidden = model(data, langData, hidden)
         output_flat = output.view(-1, ntokens)
         total_loss += len(data) * criterion(output_flat, targets).data
         hidden = repackage_hidden(hidden)
-    return total_loss[0] / len(data_source)
+    return total_loss[0] / len(data_source_words)
 
 
 def train():
@@ -142,14 +145,14 @@ def train():
         model.train()
 
         data, targets  = get_batch(train_data_words, i, args, seq_len=seq_len)
-        _, langTargets = get_batch(train_data_langs, i, args, seq_len=seq_len)
+        langData, langTargets = get_batch(train_data_langs, i, args, seq_len=seq_len)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
         hidden = repackage_hidden(hidden)
         optimizer.zero_grad()
 
-        output, langOutput, hidden, rnn_hs, dropped_rnn_hs = model(data, hidden, return_h=True)
+        output, langOutput, hidden, rnn_hs, dropped_rnn_hs = model(data, langData, hidden, return_h=True)
         raw_loss      = criterion(output.view(-1, ntokens),     targets)
         raw_lang_loss = criterion(langOutput.view(-1, nlang), langTargets)
 
@@ -196,7 +199,7 @@ try:
                 tmp[prm] = prm.data.clone()
                 prm.data = optimizer.state[prm]['ax'].clone()
 
-            val_loss2 = evaluate(val_data_words)
+            val_loss2 = evaluate(val_data_words, val_data_langs)
             print('-' * 89)
             print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                     'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
@@ -213,7 +216,7 @@ try:
                 prm.data = tmp[prm].clone()
 
         else:
-            val_loss = evaluate(val_data_words, eval_batch_size)
+            val_loss = evaluate(val_data_words, val_data_langs, eval_batch_size)
             print('-' * 89)
             print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                     'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
