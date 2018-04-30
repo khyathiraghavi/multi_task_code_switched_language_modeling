@@ -25,8 +25,6 @@ parser.add_argument('--nhid', type=int, default=1150,
                     help='number of hidden units per layer')
 parser.add_argument('--nlayers', type=int, default=3,
                     help='number of layers')
-parser.add_argument('--nlang', type=int, default=3,
-                    help='number of languages including punctuation, as a different type OTHER')
 parser.add_argument('--lr', type=float, default=30,
                     help='initial learning rate')
 parser.add_argument('--clip', type=float, default=0.25,
@@ -47,8 +45,6 @@ parser.add_argument('--dropoute', type=float, default=0.1,
                     help='dropout to remove words from embedding layer (0 = no dropout)')
 parser.add_argument('--wdrop', type=float, default=0.5,
                     help='amount of weight dropout to apply to the RNN hidden to hidden matrix')
-parser.add_argument('--tied', action='store_false',
-                    help='tie the word embedding and softmax weights')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
@@ -68,7 +64,7 @@ parser.add_argument('--wdecay', type=float, default=1.2e-6,
                     help='weight decay applied to all weights')
 args = parser.parse_args()
 
-args.cuda = False
+args.cuda = True
 
 # Set the random seed manually for reproducibility.
 torch.manual_seed(args.seed)
@@ -96,8 +92,9 @@ test_data_words, test_data_langs   = batchify(corpus.test,  langCorpus.test,  te
 ###############################################################################
 
 ntokens = len(corpus.dictionary)
+nlang   = len(langCorpus.dictionary)
 
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.tied)
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())
@@ -130,6 +127,7 @@ def train():
     total_loss = 0
     start_time = time.time()
     ntokens = len(corpus.dictionary)
+    nlang   = len(langCorpus.dictionary)
     hidden = model.init_hidden(args.batch_size)
     batch, i = 0, 0
     while i < train_data_words.size(0) - 1 - 1:
@@ -153,9 +151,9 @@ def train():
 
         output, langOutput, hidden, rnn_hs, dropped_rnn_hs = model(data, hidden, return_h=True)
         raw_loss      = criterion(output.view(-1, ntokens),     targets)
-        raw_lang_loss = criterion(langOutput.view(-1, args.nlang), langTargets)
+        raw_lang_loss = criterion(langOutput.view(-1, nlang), langTargets)
 
-        loss = raw_loss + raw_lang_loss
+        loss = raw_loss# + raw_lang_loss
         # Activiation Regularization
         loss = loss + sum(args.alpha * dropped_rnn_h.pow(2).mean() for dropped_rnn_h in dropped_rnn_hs[-1:])
         # Temporal Activation Regularization (slowness)

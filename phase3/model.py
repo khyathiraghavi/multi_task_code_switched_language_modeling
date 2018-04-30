@@ -9,7 +9,7 @@ from weight_drop import WeightDrop
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
@@ -22,10 +22,9 @@ class RNNModel(nn.Module):
             self.rnns = [WeightDrop(rnn, ['weight_hh_l0'], dropout=wdrop) for rnn in self.rnns]
         self.rnns = torch.nn.ModuleList(self.rnns)
 
-        self.langDecoder = nn.Linear(nhid, nlang)
-        self.langTransformer = nn.Linear(nhid+nlang, nhid)
+        self.langDecoder = nn.Linear(ninp, nlang)
 
-        self.decoder = nn.Linear(nhid, ntoken)
+        self.decoder = nn.Linear(ninp, ntoken)
 
         # Optionally tie weights as in:
         # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
@@ -33,16 +32,14 @@ class RNNModel(nn.Module):
         # and
         # "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling" (Inan et al. 2016)
         # https://arxiv.org/abs/1611.01462
-        if tie_weights:
-            #if nhid != ninp:
-            #    raise ValueError('When using the tied flag, nhid must be equal to emsize')
-            self.decoder.weight = self.encoder.weight
+        self.decoder.weight = self.encoder.weight
 
         self.init_weights()
 
         self.rnn_type = rnn_type
         self.ninp = ninp
         self.nhid = nhid
+        self.nlang = nlang
         self.nlayers = nlayers
         self.dropout = dropout
         self.dropouti = dropouti
@@ -77,17 +74,15 @@ class RNNModel(nn.Module):
         output = self.lockdrop(raw_output, self.dropout)
         outputs.append(output)
 
+
         predBasis = output.view(output.size(0)*output.size(1), output.size(2))
 
         langPred = self.langDecoder(predBasis)
 
-        predBasisLang = torch.cat((predBasis, langPred), 2)
-
-        langTran = self.langTransformer(predBasisLang)
-
-        decoded = self.decoder(langTran)
-        result = decoded.view(output.size(0), output.size(1), decoded.size(1))
-        langResult = langTran.view(output.size(0), output.size(1), langTran.size(1))
+        decoded = self.decoder(predBasis)
+        
+        result     = decoded.view(output.size(0), output.size(1), decoded.size(1))
+        langResult = langPred.view(output.size(0), output.size(1), langPred.size(1))
 
         if return_h:
             return result, langResult, hidden, raw_outputs, outputs
