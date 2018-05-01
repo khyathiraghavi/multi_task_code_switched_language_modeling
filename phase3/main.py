@@ -156,7 +156,7 @@ def train():
         raw_loss      = criterion(output.view(-1, ntokens),     targets)
         raw_lang_loss = criterion(langOutput.view(-1, nlang), langTargets)
 
-        loss = raw_loss# + raw_lang_loss
+        loss = raw_loss + raw_lang_loss
         # Activiation Regularization
         loss = loss + sum(args.alpha * dropped_rnn_h.pow(2).mean() for dropped_rnn_h in dropped_rnn_hs[-1:])
         # Temporal Activation Regularization (slowness)
