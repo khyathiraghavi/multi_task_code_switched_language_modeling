@@ -23,6 +23,10 @@ parser.add_argument('--emsize', type=int, default=400,
                     help='size of word embeddings')
 parser.add_argument('--langemsize', type=int, default=16,
                     help='size of word embeddings')
+parser.add_argument('--uselangencoder', action='store_true',
+                    help='use the language encoder')
+parser.add_argument('--uselangdecoder', action='store_true',
+                    help='use the language encoder')
 parser.add_argument('--nhid', type=int, default=1150,
                     help='number of hidden units per layer')
 parser.add_argument('--nlayers', type=int, default=3,
@@ -51,7 +55,7 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--nonmono', type=int, default=5,
                     help='random seed')
-parser.add_argument('--cuda', action='store_false',
+parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
@@ -67,6 +71,9 @@ parser.add_argument('--wdecay', type=float, default=1.2e-6,
 args = parser.parse_args()
 
 args.cuda = True
+print("Using Cuda", args.cuda)
+print("Using lang encoder", args.uselangencoder)
+print("Using lang decoder", args.uselangdecoder)
 
 # Set the random seed manually for reproducibility.
 torch.manual_seed(args.seed)
@@ -83,7 +90,7 @@ if torch.cuda.is_available():
 corpus = data.Corpus(args.worddata)
 langCorpus = data.Corpus(args.langdata)
 
-eval_batch_size = 10
+eval_batch_size = 1
 test_batch_size = 1
 train_data_words, train_data_langs = batchify(corpus.train, langCorpus.train, args.batch_size, args)
 val_data_words,   val_data_langs   = batchify(corpus.valid, langCorpus.valid, eval_batch_size, args)
@@ -95,8 +102,8 @@ test_data_words,  test_data_langs  = batchify(corpus.test,  langCorpus.test,  te
 
 ntokens = len(corpus.dictionary)
 nlang   = len(langCorpus.dictionary)
-
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.langemsize, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop)
+                                                                                        #args.langemsize,
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.uselangencoder)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())
@@ -118,7 +125,7 @@ def evaluate(data_source_words, data_source_langs, batch_size=10):
     for i in range(0, data_source_words.size(0) - 1, args.bptt):
         data, targets         = get_batch(data_source_words, i, args, evaluation=True)
         langData, langTargets = get_batch(data_source_langs, i, args, evaluation=True)
-        output, _, hidden = model(data, langData, hidden)
+        output, _, hidden = model(data, hidden)
         output_flat = output.view(-1, ntokens)
         total_loss += len(data) * criterion(output_flat, targets).data
         hidden = repackage_hidden(hidden)
@@ -156,7 +163,11 @@ def train():
         raw_loss      = criterion(output.view(-1, ntokens),     targets)
         raw_lang_loss = criterion(langOutput.view(-1, nlang), langTargets)
 
-        loss = raw_loss + raw_lang_loss
+        
+        if(args.uselangdecoder == True):
+            loss = raw_loss + raw_lang_loss
+        else:
+            loss = raw_loss
         # Activiation Regularization
         loss = loss + sum(args.alpha * dropped_rnn_h.pow(2).mean() for dropped_rnn_h in dropped_rnn_hs[-1:])
         # Temporal Activation Regularization (slowness)
@@ -238,14 +249,29 @@ try:
 except KeyboardInterrupt:
     print('-' * 89)
     print('Exiting from training early')
+print("evaling model")
 
 # Load the best saved model.
 with open(args.save, 'rb') as f:
     model = torch.load(f)
-    
+
 # Run on test data.
-test_loss = evaluate(test_data_words, test_batch_size)
+test_loss = evaluate(test_data_words, test_data_langs, test_batch_size)
 print('=' * 89)
 print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
     test_loss, math.exp(test_loss)))
+print('=' * 89)
+
+# Run on test data.
+val_loss = evaluate(val_data_words, val_data_langs, eval_batch_size)
+print('=' * 89)
+print('| End of training | val loss {:5.2f} | val ppl {:8.2f}'.format(
+    val_loss, math.exp(val_loss)))
+print('=' * 89)
+
+# Run on test data.
+train_loss = evaluate(train_data_words, train_data_langs, args.batch_size)
+print('=' * 89)
+print('| End of training | train loss {:5.2f} | train ppl {:8.2f}'.format(
+    train_loss, math.exp(train_loss)))
 print('=' * 89)

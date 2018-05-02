@@ -9,7 +9,7 @@ from weight_drop import WeightDrop
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, langEmbSize, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, langEmbSize, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, useLangEncoder=True):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
@@ -18,7 +18,10 @@ class RNNModel(nn.Module):
         self.word_encoder = nn.Embedding(ntoken, ninp)
         self.lang_encoder = nn.Embedding(nlang,  langEmbSize)
 
-        self.rnnInputSize = ninp + langEmbSize
+        if(useLangEncoder):
+            self.rnnInputSize = ninp + langEmbSize
+        else:
+            self.rnnInputSize = ninp
 
         self.rnns = [torch.nn.LSTM(self.rnnInputSize if l == 0 else nhid, nhid if l != nlayers - 1 else ninp, 1, dropout=dropouth) for l in range(nlayers)]
         print(self.rnns)
@@ -43,6 +46,7 @@ class RNNModel(nn.Module):
         self.rnn_type = rnn_type
         self.ninp = ninp
         self.langEmbSize = langEmbSize
+        self.useLangEncoder = useLangEncoder
         self.nhid = nhid
         self.nlang = nlang
         self.nlayers = nlayers
@@ -65,7 +69,10 @@ class RNNModel(nn.Module):
         langEmb = embedded_dropout(self.lang_encoder, inputLang, dropout=self.dropoute if self.training else 0)
         langEmb = self.lockdrop(langEmb, self.dropouti)
 
-        raw_output = torch.cat((wordEmb, langEmb), 2)
+        if(self.useLangEncoder == True):
+            raw_output = torch.cat((wordEmb, langEmb), 2)
+        else:
+            raw_output = wordEmb
         new_hidden = []
         raw_outputs = []
         outputs = []
