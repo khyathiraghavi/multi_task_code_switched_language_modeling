@@ -29,6 +29,8 @@ parser.add_argument('--uselangdecoder', action='store_true',
                     help='use the language encoder')
 parser.add_argument('--nhid', type=int, default=1150,
                     help='number of hidden units per layer')
+parser.add_argument('--langdecodedebuff', type=float, default=0.1, 
+                    help="multiplier applied to the language loss")
 parser.add_argument('--nlayers', type=int, default=3,
                     help='number of layers')
 parser.add_argument('--lr', type=float, default=30,
@@ -165,7 +167,7 @@ def train():
 
         
         if(args.uselangdecoder == True):
-            loss = raw_loss + raw_lang_loss
+            loss = raw_loss + raw_lang_loss*args.langdecodedebuff
         else:
             loss = raw_loss
         # Activiation Regularization
