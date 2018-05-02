@@ -102,8 +102,8 @@ test_data_words,  test_data_langs  = batchify(corpus.test,  langCorpus.test,  te
 
 ntokens = len(corpus.dictionary)
 nlang   = len(langCorpus.dictionary)
-                                                                                        #args.langemsize,
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.uselangencoder)
+                                                                                        
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.langemsize, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.uselangencoder)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())
