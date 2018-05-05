@@ -27,6 +27,8 @@ parser.add_argument('--uselangencoder', action='store_true',
                     help='use the language encoder')
 parser.add_argument('--uselangdecoder', action='store_true',
                     help='use the language encoder')
+parser.add_argument('--useLangBias', action='store_true',
+                    help='use the LID decoder for biasing the word decoder ')
 parser.add_argument('--nhid', type=int, default=1150,
                     help='number of hidden units per layer')
 parser.add_argument('--langdecodedebuff', type=float, default=0.1, 
@@ -70,12 +72,14 @@ parser.add_argument('--beta', type=float, default=1,
                     help='beta slowness regularization applied on RNN activiation (beta = 0 means no regularization)')
 parser.add_argument('--wdecay', type=float, default=1.2e-6,
                     help='weight decay applied to all weights')
+
 args = parser.parse_args()
 
 args.cuda = True
 print("Using Cuda", args.cuda)
 print("Using lang encoder", args.uselangencoder)
 print("Using lang decoder", args.uselangdecoder)
+print("Using LID bias", args.useLangBias)
 
 # Set the random seed manually for reproducibility.
 torch.manual_seed(args.seed)
@@ -105,7 +109,7 @@ test_data_words,  test_data_langs  = batchify(corpus.test,  langCorpus.test,  te
 ntokens = len(corpus.dictionary)
 nlang   = len(langCorpus.dictionary)
                                                                                         
-model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.langemsize, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.uselangencoder)
+model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, nlang, args.langemsize, args.dropout, args.dropouth, args.dropouti, args.dropoute, args.wdrop, args.uselangencoder, args.useLangBias)
 if args.cuda:
     model.cuda()
 total_params = sum(x.size()[0] * x.size()[1] if len(x.size()) > 1 else x.size()[0] for x in model.parameters())

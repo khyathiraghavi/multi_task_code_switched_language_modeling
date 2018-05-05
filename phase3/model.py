@@ -9,7 +9,7 @@ from weight_drop import WeightDrop
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, langEmbSize, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, useLangEncoder=True):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, nlang, langEmbSize, dropout=0.5, dropouth=0.5, dropouti=0.5, dropoute=0.1, wdrop=0, useLangEncoder=True, addLanguageBias = False):
         super(RNNModel, self).__init__()
         self.lockdrop = LockedDropout()
         self.idrop = nn.Dropout(dropouti)
@@ -30,6 +30,10 @@ class RNNModel(nn.Module):
         self.rnns = torch.nn.ModuleList(self.rnns)
 
         self.langDecoder = nn.Linear(ninp, nlang)
+
+        self.langDecoderBias = None
+        if addLanguageBias:
+            self.langDecoderBias = nn.Linear(nlang, ntoken)
 
         self.decoder = nn.Linear(ninp, ntoken)
 
@@ -61,6 +65,9 @@ class RNNModel(nn.Module):
         self.lang_encoder.weight.data.uniform_(-initrange, initrange)
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
+        if not self.langDecoderBias is None:
+            self.langDecoderBias.bias.data.fill_(0)
+            self.langDecoderBias.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, inputWords, inputLang, hidden, return_h=False):
         wordEmb = embedded_dropout(self.word_encoder, inputWords, dropout=self.dropoute if self.training else 0)
@@ -93,6 +100,10 @@ class RNNModel(nn.Module):
         predBasis = output.view(output.size(0)*output.size(1), output.size(2))
 
         langPred = self.langDecoder(predBasis)
+
+        if not self.langDecoderBias is None:
+            biasTerm = self.langDecoderBias(langPred)
+            self.decoder.bias.data = biasTerm.data
 
         decoded = self.decoder(predBasis)
         
