@@ -5,6 +5,7 @@ from torch.autograd import Variable
 from embed_regularize import embedded_dropout
 from locked_dropout import LockedDropout
 from weight_drop import WeightDrop
+import numpy as np
 
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
@@ -63,11 +64,12 @@ class RNNModel(nn.Module):
         initrange = 0.1
         self.word_encoder.weight.data.uniform_(-initrange, initrange)
         self.lang_encoder.weight.data.uniform_(-initrange, initrange)
-        self.decoder.bias.data.fill_(0)
-        self.decoder.weight.data.uniform_(-initrange, initrange)
         if not self.langDecoderBias is None:
             self.langDecoderBias.bias.data.fill_(0)
             self.langDecoderBias.weight.data.uniform_(-initrange, initrange)
+
+        self.decoder.bias.data.fill_(0)
+        self.decoder.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, inputWords, inputLang, hidden, return_h=False):
         wordEmb = embedded_dropout(self.word_encoder, inputWords, dropout=self.dropoute if self.training else 0)
@@ -101,11 +103,11 @@ class RNNModel(nn.Module):
 
         langPred = self.langDecoder(predBasis)
 
+        decoded = self.decoder(predBasis)
+
         if not self.langDecoderBias is None:
             biasTerm = self.langDecoderBias(langPred)
-            self.decoder.bias.data = biasTerm.data
-
-        decoded = self.decoder(predBasis)
+            decoded += biasTerm
         
         result     = decoded.view(output.size(0), output.size(1), decoded.size(1))
         langResult = langPred.view(output.size(0), output.size(1), langPred.size(1))
